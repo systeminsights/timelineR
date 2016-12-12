@@ -206,3 +206,40 @@ align_and_draw_the_plots <- function(all_plots, plot_type, event_plot_size, save
   }
   
 }
+
+
+
+plot_time_series <- function(list_of_dfs) {
+  ggobj <- ggplot()
+  y_value <- 0
+  for(i in seq_along(list_of_dfs)) {
+    req_cols <- setdiff(names(list_of_dfs[[i]]),c("start","end"))
+    for(j in req_cols) {
+      ggobj <- ggobj + geom_rect(data=list_of_dfs[[i]],aes_string(xmin="start",xmax="end",ymin=y_value,ymax=y_value+1,fill=j))
+      y_value <- y_value + 1
+    }
+    y_value <- y_value + 1
+  }
+  print(ggobj)
+}
+
+.generate_event_plot_layer <- function(data_to_plot, end_time=NULL) {
+  
+  if( "start" %notin% names(data_to_plot) ) {
+    if(is.unsorted(data_to_plot$timestamp))
+      data_to_plot <- data_to_plot[order(data_to_plot$timestamp,na.last=FALSE),]
+    if(is.null(end_time)) {
+      all_times <- c(data_to_plot$timestamp,toPOSIXct("2100-01-01")) 
+    } else {
+      all_times <- c(data_to_plot$timestamp,toPOSIXct(end_time))
+    }
+    data_to_plot$timestamp <- NULL
+    data_to_plot$start <- all_times[-length(all_times)]
+    data_to_plot$end <- all_times[-1L]
+  }
+  
+  if( anyNA(data_to_plot$start) || anyNA(data_to_plot$end) )
+    stop("NAs found in time columns!")
+  
+  geom_rect(data=data_to_plot,aes(xmin = start, xmax = end, ymin = 0L, ymax = 1L,fill=value)) 
+}
