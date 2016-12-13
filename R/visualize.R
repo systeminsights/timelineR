@@ -92,30 +92,6 @@
   mapped_colors
 }
 
-# TODO: Go through this later
-.generate_sample_plot_layer <- function(data_to_plot, lineWidth=0.3) {
-  if(nrow(data_to_plot)<2) {
-    if(anyNA(data_to_plot$value))
-      return(vimana::return_NULL_with_message("NAs found in the value column. Not Plotting this particular data."))
-    data_to_plot <- MakeEndTime(data=data_to_plot,endtime.lastrow=toPOSIXct("2100-01-01"))
-  }
-  
-  if("start" %in% names(data_to_plot)) {
-    data_to_plot$value2 <- data_to_plot$value
-    continuous_points <- which(data_to_plot$end[-nrow(data_to_plot)] == data_to_plot$start[-1L])
-    if(length(continuous_points)>0) {
-      data_to_plot <- rbind(data_to_plot,
-                            data.frame(start=data_to_plot$start[continuous_points+1L],end=data_to_plot$end[continuous_points],
-                                       value=data_to_plot$value[continuous_points],value2=data_to_plot$value[continuous_points+1L])
-      )
-    }
-    plotobj <- geom_segment(data=data_to_plot,aes(x=start,xend=end,y=value,yend=value2),size=lineWidth)
-    return(plotobj)
-  } else {
-    plotobj <- geom_step(data=data_to_plot,aes(x=timestamp,y=value,group=1),direction="hv",size=lineWidth)
-    return(plotobj)
-  }
-}
 
 .overlap_sample_plots <- function(list_of_plots) {
   all_names <- names(list_of_plots)
@@ -197,32 +173,6 @@
   final_plot
 }
 
-#' plots two or more ggplots by dividing the screen into vertical sections
-#' @inheritParams .rbind_ggplots
-.cbind_ggplots <- function(gtl){
-  gtl <- lapply(gtl,function(x) {
-    if(gtable::is.gtable(x)) return(x)
-    ggplotGrob(x)
-  })
-  bind2 <- function (x, y) 
-  {
-    stopifnot(nrow(x) == nrow(y))
-    if (ncol(x) == 0) 
-      return(y)
-    if (ncol(y) == 0) 
-      return(x)
-    y$layout$l <- y$layout$l + ncol(x)
-    y$layout$r <- y$layout$r + ncol(x)
-    x$layout <- rbind(x$layout, y$layout)
-    x$widths <- gtable:::insert.unit(x$widths, y$widths)
-    x$colnames <- c(x$colnames, y$colnames)
-    x$heights <- grid::unit.pmax(x$heights, y$heights)
-    x$grobs <- append(x$grobs, y$grobs)
-    x
-  }
-  Reduce(bind2, gtl)
-}
-
 give_match_status <- function(grep_result, actual_names){
   no_matches = rowSums(grep_result) < 1
   if(sum(no_matches))
@@ -251,12 +201,11 @@ match_grep <- function(grep_vec, actual_names) {
 
 scale_data <- function(timeline_df_subset_range, scale_vals){
   if(is.null(scale_vals)) return(timeline_df_subset_range)
-  
   flog.info("Scaling few DIs from 'scale_vals'")
   numeric_cols = names(timeline_df_subset_range)[timeline_df_subset_range %>% sapply(is.numeric)]
   grep_match_result <- match_grep(grep_vec = scale_vals, actual_names = names(timeline_df_subset_range[, numeric_cols]))
   timeline_df_subset_range[names(grep_match_result)] = 
-    lapply(names(grep_match_result), function(x) grep_match_result[x] * timeline_df_subset_range[x])
+    lapply(names(grep_match_result), function(x) grep_match_result[x] * timeline_df_subset_range[[x]])
   timeline_df_subset_range
 }
 
@@ -342,18 +291,15 @@ PlotDataItems <- function(timeline_df, data_grep="", start_time=NULL, end_time=N
   timeline_df_subset_range = subset_data_into_time_range(timeline_df_subset, start_time, end_time, ts_col)
   timeline_cleaned = scale_data(timeline_df_subset_range, scale_vals)
   
-  event_plots <- create_state_plots(timeline_cleaned)
-  line_plots <- create_numeric_plots(timeline_cleaned)  
+  state_plots <- create_state_plots(timeline_cleaned, ts_col)
+  numeric_plots <- create_numeric_plots(timeline_cleaned, ts_col)  
   
-  if(!is.null(overlap_plots)) {
-    combined_plot_list <- create_overlap_plots(overlap_plots, line_plots, event_plots)
-  } 
-  else {
-    combined_plot_list <- create_non_overlap_plots(line_plots, event_plots)
-  }
-  plot_type = combined_plot_list$plot_type
-  all_plots = combined_plot_list$all_plots
-  
+  # combined_plot_list <- create_overlap_plots(overlap_plots, line_plots, event_plots)
+  # combined_plot_list <- create_non_overlap_plots(numeric_plots, state_plots)
+
+  # plot_type = combined_plot_list$plot_type
+  # all_plots = combined_plot_list$all_plots
+  # 
   all_plots <- legendify_and_colorify_the_plots(all_plots, plot_type, add_legend, color_palette_manual)
   
   default_ylimits <- get_plot_limits(all_plots, plot_type, ylimits)

@@ -1,104 +1,49 @@
 
-generate_event_plot_layer <- function(data_to_plot, end_time=NULL) {
-  start_values = data_to_plot$timestamp[1:(nrow(data_to_plot) - 1)]
-  end_values = data_to_plot$timestamp[2:nrow(data_to_plot)]
+generate_state_plot_layer <- function(data_to_plot) {
+  start_values = data_to_plot[1:(nrow(data_to_plot) - 1), 1]
+  end_values = data_to_plot[2:nrow(data_to_plot), 1]
+  names(data_to_plot)[2] = "value"
   
-  geom_rect(data=data_to_plot[-nrow(data_to_plot), ],
-            aes(xmin = start_values, xmax = end_values,
-                ymin = 0L, ymax = 1L, fill=value)) 
+  ggplot() + geom_rect(data=data_to_plot[-nrow(data_to_plot),],
+            aes_string(xmin = "start_values", xmax = "end_values",
+                       ymin = 0L, ymax = 1L, fill = "value")) 
 }
+
+generate_numeric_plot_layer <- function(data_to_plot, line_width=0.3) {
+  names(data_to_plot)[2] = "value"
+  ggplot() + geom_step(data=data_to_plot, 
+            aes_string(x = names(data_to_plot)[1], y = "value", group = 1), size = line_width)
+}
+
 
 create_state_plots <- function(timeline_cleaned, ts_col){
   flog.info("creating state plot layers")
   state_cols = names(timeline_cleaned)[timeline_cleaned %>% sapply(is.character)]
-  state_plots <- lapply(state_cols, function(x)
-    generate_event_plot_layer(timeline_cleaned[, c(ts_col, x)]))
+  state_plots <- lapply(state_cols, function(x) generate_state_plot_layer(timeline_cleaned[, c(ts_col, x)]))
   
-  event_plots <- event_plots[!vapply(X = event_plots,FUN = is.null,FUN.VALUE = FALSE,USE.NAMES = FALSE)]
-  return(event_plots)
+  #state_plots <- state_plots[!vapply(X = event_plots, FUN = is.null, FUN.VALUE = FALSE,USE.NAMES = FALSE)]
+  return(state_plots)
 }
 
 
-create_line_plots <- function(data_list, SorE){
-  message("creating sample plot layers")
-  # TODO: Go through generate_sample_plot_layer
-  line_plots <- sapply(X = data_list[(SorE%in%"Sample")|(SorE%in%"HSPMSample")],
-                       simplify = FALSE,USE.NAMES = TRUE, 
-                       FUN = .generate_sample_plot_layer
-  )
+create_numeric_plots <- function(timeline_cleaned, ts_col){
+  flog.info("creating sample plot layers")
+  numeric_cols = names(timeline_cleaned)[timeline_cleaned %>% sapply(is.numeric)]
+  numeric_plots <- lapply(numeric_cols, function(x) generate_numeric_plot_layer(timeline_cleaned[, c(ts_col, x)]))
   
-  line_plots <- line_plots[!vapply(X = line_plots,FUN = is.null,FUN.VALUE = FALSE,USE.NAMES = FALSE)]
-  return(line_plots)
+  return(numeric_plots)
 }
 
 
-get_overlapping_plots <- function(extract_plots, nam_line_p, plots_already_used,
-                                  plot_type, new_names){
-  overlapping_plots <- lapply(extract_plots,function(x) {
-    x <- str_trim(str_split(string = x,pattern = "\\(|\\)|,")[[1]])
-    x <- x[x %notin% ""]
-    grep_result <- .match_grep_vec(x,nam_line_p)
-    if(!anyNA(grep_result)) {
-      plots_already_used <<- c(plots_already_used,grep_result)
-      new_names <<- c(new_names,paste0(grep_result,collapse = "|"))
-      plot_type <<- c(plot_type,"Sample")
-      return(.overlap_sample_plots(line_plots[grep_result]))
-    } else {
-      grep_result <- .match_grep_vec(x,nam_event_p)
-      if(!anyNA(grep_result)) {
-        plots_already_used <<- c(plots_already_used,grep_result)
-        new_names <<- c(new_names,paste0(grep_result,collapse = "|"))
-        plot_type <<- c(plot_type,"Event")
-        return(.overlap_event_plots(event_plots[grep_result]))
-      } else {
-        warning("matching didn't happen properly for overlapping plots!")
-        return(NULL)
-      }
-    }
-  })
-  overlapping_plots <- overlapping_plots[!vapply(X = overlapping_plots,FUN = is.null,FUN.VALUE = FALSE,USE.NAMES = FALSE)]
-  names(overlapping_plots) <- new_names
-  combined_plot_list <- list(plots_already_used = plots_already_used,
-                             new_names = new_names,
-                             plot_type = plot_type,
-                             overlapping_plots = overlapping_plots)
-  return(combined_plot_list)
-} 
-
-create_overlap_plots <- function(overlap_plots, line_plots, event_plots){
-  message("creating overlapping plots")
-  extract_plots <- str_extract_all(string = overlap_plots,pattern = "\\([^\\(\\)]*\\)")[[1]]
-  nam_line_p <- names(line_plots)
-  nam_event_p <- names(event_plots)
-  plots_already_used <- character(0)
-  new_names <- character(0)
-  plot_type <- character(0)
-  
-  combined_plot_list <- get_overlapping_plots(extract_plots, nam_line_p, plots_already_used,
-                                              plot_type, new_names)
-  overlapping_plots <- combined_plot_list$overlapping_plots
-  new_names <- combined_plot_list$new_names
-  plots_already_used <- combined_plot_list$plots_already_used
-  plot_type <- combined_plot_list$plot_type
-  
-  plot_type <- c(plot_type,
-                 rep("Sample",times = length(setdiff(nam_line_p,plots_already_used))),
-                 rep("Event",times = length(setdiff(nam_event_p,plots_already_used)))
-  )
-  remaining_plots <- sapply(X = c(line_plots,event_plots)[setdiff(c(nam_line_p,nam_event_p),plots_already_used)],
-                            FUN = function(x) {
-                              ggplot() + x
-                            },simplify = FALSE,USE.NAMES = TRUE)
-  all_plots <- c(overlapping_plots,remaining_plots)
-  names(plot_type) <- names(all_plots)
-  return(list(all_plots = all_plots, plot_type = plot_type))
+get_overlapping_plots <- function(){
+ 
 }
 
-create_non_overlap_plots <- function(line_plots, event_plots){
-  all_plots <- sapply(X = c(line_plots,event_plots),FUN = function(x) {
+create_non_overlap_plots <- function(numeric_plots, state_plots){
+  all_plots <- lapply(X = c(numeric_plots, state_plots),FUN = function(x) {
     ggplot() + x
-  },simplify = FALSE,USE.NAMES = TRUE)
-  plot_type <- c(rep(x = "Sample",times = length(line_plots)),rep(x = "Event",times = length(event_plots)))
+  })
+  plot_type <- c(rep("Numeric", length(numeric_plots)),rep("State", length(state_plots)))
   names(plot_type) <- names(all_plots)
   return(list(all_plots = all_plots, plot_type = plot_type))
 }
@@ -205,7 +150,7 @@ align_and_draw_the_plots <- function(all_plots, plot_type, event_plot_size, save
   if(!is.null(savePath)) {
     message("Writing image to file as PNG in: ",  savePath)
     png(savePath, width = 1500, height = 800)
-    grid::grid.draw(all_plots)
+    grid::grid.draw(combined_plot_list)
     dev.off() 
   }
   
@@ -216,18 +161,3 @@ align_and_draw_the_plots <- function(all_plots, plot_type, event_plot_size, save
   
 }
 
-
-
-plot_time_series <- function(list_of_dfs) {
-  ggobj <- ggplot()
-  y_value <- 0
-  for(i in seq_along(list_of_dfs)) {
-    req_cols <- setdiff(names(list_of_dfs[[i]]),c("start","end"))
-    for(j in req_cols) {
-      ggobj <- ggobj + geom_rect(data=list_of_dfs[[i]],aes_string(xmin="start",xmax="end",ymin=y_value,ymax=y_value+1,fill=j))
-      y_value <- y_value + 1
-    }
-    y_value <- y_value + 1
-  }
-  print(ggobj)
-}
