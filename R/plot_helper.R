@@ -9,35 +9,36 @@ generate_state_plot_layer <- function(data_to_plot) {
                        ymin = 0L, ymax = 1L, fill = "value")) 
 }
 
-generate_numeric_plot_layer <- function(data_to_plot, line_width=0.3) {
+generate_numeric_plot_layer <- function(data_to_plot, current_ylimit, line_width=0.3) {
   names(data_to_plot)[2] = "value"
-  ggplot() + geom_step(data=data_to_plot, 
-            aes_string(x = names(data_to_plot)[1], y = "value", group = 1), size = line_width)
+  ggplot() + 
+    geom_step(data=data_to_plot, aes_string(x = names(data_to_plot)[1], y = "value", group = 1), size = line_width) +
+    coord_cartesian(ylim = current_ylimit)
+    
 }
 
 
-create_state_plots <- function(timeline_cleaned, ts_col){
+create_state_plots <- function(timeline_cleaned, ts_col, state_cols){
   flog.info("creating state plot layers")
-  state_cols = names(timeline_cleaned)[timeline_cleaned %>% sapply(is.character)]
-  state_plots <- lapply(state_cols, function(x) generate_state_plot_layer(timeline_cleaned[, c(ts_col, x)]))
+  
+  state_plots <- sapply(state_cols, function(x) generate_state_plot_layer(timeline_cleaned[, c(ts_col, x)]),
+                        simplify = F, USE.NAMES = T)
   
   #state_plots <- state_plots[!vapply(X = event_plots, FUN = is.null, FUN.VALUE = FALSE,USE.NAMES = FALSE)]
   return(state_plots)
 }
 
 
-create_numeric_plots <- function(timeline_cleaned, ts_col){
+create_numeric_plots <- function(timeline_cleaned, ts_col, numeric_cols, actual_ylimits){
   flog.info("creating sample plot layers")
-  numeric_cols = names(timeline_cleaned)[timeline_cleaned %>% sapply(is.numeric)]
-  numeric_plots <- lapply(numeric_cols, function(x) generate_numeric_plot_layer(timeline_cleaned[, c(ts_col, x)]))
+  numeric_plots <- mapply(current_plot = numeric_cols, current_ylimit = actual_ylimits,
+                          FUN = function(current_plot, current_ylimit)
+                            generate_numeric_plot_layer(timeline_cleaned[, c(ts_col, current_plot)], current_ylimit),
+                          SIMPLIFY = F, USE.NAMES = T)
   
   return(numeric_plots)
 }
 
-
-get_overlapping_plots <- function(){
- 
-}
 
 create_non_overlap_plots <- function(numeric_plots, state_plots){
   all_plots <- lapply(X = c(numeric_plots, state_plots),FUN = function(x) {
@@ -53,8 +54,9 @@ create_non_overlap_plots <- function(numeric_plots, state_plots){
 #  plot_type is used here which is just the titles as a named list
 # Check what color is given to those variables which does not exist in the scales
 # Use scale_manual as a layer for ggplot
-legendify_and_colorify_the_plots <- function(all_plots, plot_type, add_legend, color_palette_manual){
-  all_plots <- mapply(basic_plot = all_plots,ptype=plot_type,FUN = function(basic_plot,ptype) {
+add_legend_to_plots <- function(all_plots, add_legend){
+  
+  all_plots <- lapply(all_plots, function(basic_plot) {
     basic_plot <- basic_plot + theme(panel.background = element_rect(fill="#EEEEEE", colour="black"),
                                      legend.justification=c(1,1),legend.direction = "horizontal",
                                      legend.title=element_blank())
@@ -64,42 +66,32 @@ legendify_and_colorify_the_plots <- function(all_plots, plot_type, add_legend, c
       basic_plot <- basic_plot + theme(legend.position="none")
     }
     
-    if(ptype %in% "Event") {
-      # Y-axis ticks are remvoved for events
-      basic_plot <- basic_plot + scale_y_continuous(breaks=NULL)
-      # color_mapping is just a named list. Inside the below function, the usual color coding can
-      # be hard-coded
-      color_mappng <- .map_values_to_colors(basic_plot$layers[[1]]$data, color_palette_manual)
-      basic_plot <- basic_plot + scale_fill_manual(values=color_mappng)
-    }
-    
     basic_plot
-  },SIMPLIFY = FALSE,USE.NAMES = TRUE)
+  })
   return(all_plots)
 }
 
-# x and y limits
-# event plots are given a std ylimit of c(0,1)
-get_plot_limits <- function(all_plots, plot_type, ylimits){
-  event_plot_limits <- lapply(all_plots[plot_type %in% "Event"],FUN = function(x) {
-    c(0L,length(x$layers))
+
+add_colors_to_state_plots <- function(all_plots, color_palette_manual){
+  all_plots <- lapply(all_plots, function(basic_plot) {
+    basic_plot <- basic_plot + scale_y_continuous(breaks=NULL)
+    color_mapping <- map_values_to_colors(basic_plot$layers[[1]]$data, color_palette_manual)
+    basic_plot <- basic_plot + scale_fill_manual(values=color_mapping)
+    
+    basic_plot  
   })
-  default_ylimits <- c(
-    rep(x = list(NULL),times = sum(plot_type %in% "Sample")),
-    event_plot_limits
-  )
-  names(default_ylimits) <- c(names(all_plots)[plot_type %in% "Sample"],names(all_plots)[plot_type %in% "Event"])
-  # TODO: I don't think this is going to be useful, particulary when different data items have same column 
-  # name but different range of values
-  if(!is.null(ylimits)) {
-    grep_match_result <- .match_grep(grep_vec = ylimits,actual_names = names(all_plots))
-    grep_match_result <- grep_match_result[names(plot_type[plot_type %in% "Sample"])]
-    for(i in names(grep_match_result)) {
-      default_ylimits[[i]] <- grep_match_result[[i]]
-    }
-  }
-  default_ylimits <- default_ylimits[names(all_plots)]
-  return(default_ylimits)
+}
+
+get_plot_limits <- function(timeline_cleaned, numeric_plots, ylimits){
+  numeric_cols = names(timeline_df_subset_range)[timeline_df_subset_range %>% sapply(is.numeric)]
+  
+  default_ylimits <- rep(list(NULL), length(numeric_plots))
+  names(default_ylimits) <- numeric_cols
+  
+  grep_match_result <- match_grep(grep_vec = ylimits, actual_names = numeric_cols)
+  
+  default_ylimits[names(grep_match_result)] = grep_match_result
+  default_ylimits[numeric_cols]
 }
 
 
@@ -107,13 +99,12 @@ add_titles_to_the_plot <- function(all_plots, titles){
   default_titles <- names(all_plots)
   names(default_titles) <- names(all_plots)
   
-  # This option can be retained. 
   if(!is.null(titles)) {
     message("Adding new plot titles")
-    grep_match_result <- .match_grep(grep_vec = titles,actual_names = names(all_plots))
+    grep_match_result <- match_grep(grep_vec = titles,actual_names = names(all_plots))
     default_titles[names(grep_match_result)] <- grep_match_result
   }
-  all_plots <- mapply(FUN = function(x,y) x+ggtitle(y), x=all_plots, y=default_titles, SIMPLIFY = FALSE,USE.NAMES = TRUE)
+  all_plots <- mapply(FUN = function(x,y) x + ggtitle(y), x=all_plots, y=default_titles, SIMPLIFY = FALSE,USE.NAMES = TRUE)
   return(all_plots)
 }
 
@@ -139,12 +130,10 @@ add_labels_to_the_plot <- function(all_plots, plot_type, xlabels, ylabels){
 }
 
 
-align_and_draw_the_plots <- function(all_plots, plot_type, event_plot_size, savePath){
+align_and_draw_the_plots <- function(all_plots, numeric_cols, state_cols, event_plot_size, savePath){
   message("Aligning plots")
   
-  # size of 1 is hardcoded for samples
-  # Note: You are yet to read sample_layer plot
-  sizelist <- c( rep(1,times=sum(plot_type %in% "Sample")), rep(event_plot_size,times=sum(plot_type %in% "Event")) )
+  sizelist <- c(rep(1, times = length(numeric_cols)), rep(event_plot_size, times = length(state_cols)))
   all_plots <- .rbind_ggplots(all_plots,ratio = sizelist)
   
   if(!is.null(savePath)) {
@@ -161,3 +150,213 @@ align_and_draw_the_plots <- function(all_plots, plot_type, event_plot_size, save
   
 }
 
+
+.get_x_limits_from_ggplot <- function(ggobject) {
+  num_layers <- length(ggobject$layers)
+  if(!is.null(ggobject$coordinates$limits$x)) {
+    return(ggobject$coordinates$limits$x)
+  }
+  range_vec <- numeric(0)
+  for(i in seq_len(num_layers)) {
+    x_var <- as.character(ggobject$layers[[i]]$mapping$x)
+    if(length(x_var)>0) {
+      if(length(ggobject$layers[[1]]$data)==0) {
+        new_range <- range(ggobject$data[[x_var]])
+      } else {
+        new_range <- range(ggobject$layers[[i]]$data[[x_var]])
+      }
+    } else {
+      xmin_var <- as.character(ggobject$layers[[i]]$mapping$xmin)
+      xmax_var <- as.character(ggobject$layers[[i]]$mapping$xmax)
+      if(length(ggobject$layers[[1]]$data)==0) {
+        min_value <- min(ggobject$data[[xmin_var]])
+        max_value <- max(ggobject$data[[max_value]])
+      } else {
+        min_value <- min(ggobject$layers[[i]]$data[[xmin_var]])
+        max_value <- max(ggobject$layers[[i]]$data[[xmax_var]])
+      }
+      new_range <- c(min_value,max_value)
+    }
+    range_vec <- range(range_vec,new_range)
+  }
+  range_vec
+}
+
+.AddExtrasToGGPlot <- function(ggobject,xrange=NULL) {
+  if(is.null(xrange) || anyNA(xrange))
+    xrange <- toPOSIXct(.get_x_limits_from_ggplot(ggobject))
+  prt_brks <- base::pretty(n = 10,x = xrange)
+  xlabels <- attr(prt_brks, "labels")
+  one_label <- xlabels[1]
+  xlabels[1] <- as.character(prt_brks[1])
+  if(str_detect(string=one_label,pattern="^[[:digit:]]+:[[:digit:]]+:[[:digit:]]+$")) {
+    lable <- paste("Time (HH:MM:SS)")
+  } else if(str_detect(string=one_label,pattern="^[[:digit:]]+:[[:digit:]]+$")) {
+    lable <- paste("Time (HH:MM)")
+  } else if(str_detect(string=one_label,pattern="^[[:digit:]]+$")) {
+    lable <- paste("Time (s)")
+  } else if(str_detect(string=one_label,pattern="^[[:alpha:]]+ [[:digit:]]+ [[:digit:]]+:[[:digit:]]+$")) {
+    lable <- paste("Time (Date HH:MM)")
+  } else if(str_detect(string=one_label,pattern="^[[:alpha:]]+ [[:digit:]]+$")) {
+    lable <- paste("Time (Date)")
+  } else {
+    stop("something wrong!")
+  }
+  ggobject <- ggobject + xlab(lable) + scale_x_datetime(breaks=prt_brks,labels=xlabels)
+  return(ggobject)
+}
+
+
+
+
+# TODO : cleanup and pass the color mapping as an argument
+map_values_to_colors <- function(input, color_palette_manual = NULL) {
+  
+  color_palette <- c(green = "#6fc376", pink = "#f6928f", grey = "#c1c1c1", white = "#ffffff")
+  if(!is.null(color_palette_manual))
+    color_palette[1:length(color_palette_manual)] = color_palette_manual
+  
+  color_mapping <- c(`Data-Unavailable` = "grey", `Non-Producing` = "pink", Producing = "green", `NA` = "white")
+  
+  uniq_values <- unique(input$value)
+  mapped_colors <- color_palette[color_mapping[uniq_values]]
+  names(mapped_colors) <- uniq_values
+  which_nas <- is.na(mapped_colors)
+  num_nas <- sum(which_nas)
+  # Able to understand the result of below code but is'nt it too complex?
+  mapped_colors[which_nas] <- 
+    c(
+      setdiff(color_palette,mapped_colors),
+      rep(unname(color_palette),times = ceiling(num_nas/length(color_palette)))
+    )[seq_len(num_nas)]
+  mapped_colors
+}
+
+
+.overlap_sample_plots <- function(list_of_plots) {
+  all_names <- names(list_of_plots)
+  for(i in seq_along(list_of_plots)) {
+    list_of_plots[[i]]$mapping$colour <- suppressWarnings(ExtractParamfromPath(all_names[i]))
+  }
+  Reduce(f = `+`,x = list_of_plots,init = ggplot()) 
+}
+
+.overlap_event_plots <- function(list_of_plots) {
+  plot_obj <- ggplot()
+  count <- 0L
+  for(single_layer in list_of_plots) {
+    single_layer$mapping$ymin <- count
+    count <- count + 1L
+    single_layer$mapping$ymax <- count
+    plot_obj <- plot_obj + single_layer
+  }
+  plot_obj
+}
+
+#' plots two or more ggplots one below another
+#' @param gtl is a list of ggplot or gtable objects
+#' @param ratio if not null, is a numeric vector of the same length as gtl. Plots are resized to this ratio.
+.rbind_ggplots <- function(gtl, ratio=NULL){ 
+  
+  gtl <- lapply(gtl,function(x) {
+    
+    if(gtable::is.gtable(x)) return(x)
+    ggplotGrob(x)
+  })
+  
+  if(!is.null(ratio)) stopifnot(length(gtl)==length(ratio))
+  
+  num_cols <- vapply(gtl,FUN = ncol,FUN.VALUE = 0L)
+  
+  ## What exactly is this check for?
+  if(length(unique(num_cols))!=1) stop("number of cols are not the same for all the ggplots!")
+  
+  max_widths <- Reduce(f = grid::unit.pmax,x = lapply(gtl,function(x) x$widths))
+  
+  # TODO : Use of cbind_ggplot
+  # multiplying the heights using the ratio
+  gtl <- mapply(x=gtl,y=ratio,FUN = function(x,y) {
+    which_panels <- str_detect(string = x$layout$name,pattern = "panel")
+    starts <- x$layout$t[which_panels]
+    ends <- x$layout$b[which_panels]
+    all_heights_req <- unique(seq(from = starts,to = ends,by = 1L))
+    for(i in all_heights_req){
+      x$heights[i] =  x$heights[i] * y
+    }
+    x
+  })
+  
+  all_grobs <- Reduce(f = append,x = lapply(gtl,function(x) x$grobs))
+  
+  all_heights <- Reduce(f = grid::unit.c,x = lapply(gtl,function(x) x$heights))
+  
+  all_rownames <- Reduce(f = c,x = lapply(gtl,function(x) x$rownames))
+  
+  num_rows <- unname(vapply(gtl,FUN = nrow,FUN.VALUE = 0L))
+  num_rows <- c(0,num_rows[-length(num_rows)])
+  num_rows <- cumsum(num_rows)
+  gtl <- mapply(x=gtl,y=num_rows,function(x,y) {
+    x$layout$t <- x$layout$t + y
+    x$layout$b <- x$layout$b + y
+    x
+  })
+  
+  all_layout <- Reduce(f = rbind,x = lapply(gtl,function(x) x$layout))
+  
+  final_plot <- gtl[[1]]
+  final_plot$layout <- all_layout
+  final_plot$heights <- all_heights
+  final_plot$rownames <- all_rownames
+  final_plot$widths <- max_widths
+  final_plot$grobs <- all_grobs
+  
+  final_plot
+}
+
+give_match_status <- function(grep_result, actual_names){
+  no_matches = rowSums(grep_result) < 1
+  if(sum(no_matches))
+    flog.info(sprintf("No matches found for scaling %s", paste(actual_names[no_matches], collapse = ", ")))
+  
+  multiple_matches = rowSums(grep_result) > 1
+  if(sum(multiple_matches))
+    flog.info(sprintf("Multiple matches found for scaling %s", paste(actual_names[multiple_matches], collapse = ", ")))
+  
+  rowSums(grep_result) == 1
+}
+
+match_grep <- function(grep_vec, actual_names) {
+  
+  grep_result <- vapply(X = names(grep_vec), FUN = stringr::str_detect, string=actual_names,
+                        USE.NAMES = FALSE, FUN.VALUE = logical(length(actual_names)))
+  if(is.vector(grep_result)) grep_result <- matrix(grep_result,nrow = length(actual_names))
+  
+  one_match_check = give_match_status(grep_result, actual_names)
+  
+  which_matches <- apply(X = grep_result[one_match_check, ,drop=FALSE], MARGIN = 1, FUN = which)
+  result_vec <- grep_vec[which_matches]
+  names(result_vec) <- actual_names[one_match_check]
+  result_vec
+}
+
+scale_data <- function(timeline_df_subset_range, scale_vals, numeric_cols){
+  if(is.null(scale_vals)) return(timeline_df_subset_range)
+  flog.info("Scaling few DIs from 'scale_vals'")
+  
+  grep_match_result <- match_grep(grep_vec = scale_vals, actual_names = names(timeline_df_subset_range[, numeric_cols]))
+  timeline_df_subset_range[names(grep_match_result)] = 
+    lapply(names(grep_match_result), function(x) grep_match_result[x] * timeline_df_subset_range[[x]])
+  timeline_df_subset_range
+}
+
+subset_data_into_time_range <- function(timeline_df_subset, start_time, end_time, ts_col){
+  
+  #finding start and end time limits, only when the limits are not already specified
+  time_range <- range(timeline_df_subset[[ts_col]])
+  if(!is.null(start_time)) time_range[1] <- start_time
+  if(!is.null(end_time))   time_range[2] <- end_time
+  
+  # function to subset data frame into time range
+  timeline_df_subset %>% filter(timeline_df_subset[[ts_col]] >= time_range[1], timeline_df_subset[[ts_col]] <= time_range[2])
+  
+}

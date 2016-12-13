@@ -23,11 +23,15 @@ timeline_df = test_device_df
 data_grep = "mode|exec|peed"
 names(timeline_df)
 invert = F
+add_legend = T
 PlotDataItems(timeline_df, color_palette_manual = color_palette_manual,save_path = save_path,xlabels = "Appender line")
 
 grep_vec = scale_vals = c("SPEED-ACTUAL" = 1e-4, "SPEED-COMMANDED" = 1e2)
-
-
+ylimits = list("SPEED-ACTUAL" = c(100, 1800))
+titles = c("mode" = "THE MODE", "exec" = "THE EX", "peed" = "PEED")
+xlabels = c("mode" = "THE MODE", "exec" = "THE EX", "peed" = "PEED")
+ylabels = c("mode" = "THE MODE", "exec" = "THE EX", "peed" = "PEED")
+event_plot_size = 0.5
 ggplot() + state_plots[[1]] + numeric_plots[[1]]
 
 

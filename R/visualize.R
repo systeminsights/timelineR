@@ -1,236 +1,5 @@
 
 
-.get_x_limits_from_ggplot <- function(ggobject) {
-  num_layers <- length(ggobject$layers)
-  if(!is.null(ggobject$coordinates$limits$x)) {
-    return(ggobject$coordinates$limits$x)
-  }
-  range_vec <- numeric(0)
-  for(i in seq_len(num_layers)) {
-    x_var <- as.character(ggobject$layers[[i]]$mapping$x)
-    if(length(x_var)>0) {
-      if(length(ggobject$layers[[1]]$data)==0) {
-        new_range <- range(ggobject$data[[x_var]])
-      } else {
-        new_range <- range(ggobject$layers[[i]]$data[[x_var]])
-      }
-    } else {
-      xmin_var <- as.character(ggobject$layers[[i]]$mapping$xmin)
-      xmax_var <- as.character(ggobject$layers[[i]]$mapping$xmax)
-      if(length(ggobject$layers[[1]]$data)==0) {
-        min_value <- min(ggobject$data[[xmin_var]])
-        max_value <- max(ggobject$data[[max_value]])
-      } else {
-        min_value <- min(ggobject$layers[[i]]$data[[xmin_var]])
-        max_value <- max(ggobject$layers[[i]]$data[[xmax_var]])
-      }
-      new_range <- c(min_value,max_value)
-    }
-    range_vec <- range(range_vec,new_range)
-  }
-  range_vec
-}
-
-.AddExtrasToGGPlot <- function(ggobject,xrange=NULL) {
-  if(is.null(xrange) || anyNA(xrange))
-    xrange <- toPOSIXct(.get_x_limits_from_ggplot(ggobject))
-  prt_brks <- base::pretty(n = 10,x = xrange)
-  xlabels <- attr(prt_brks, "labels")
-  one_label <- xlabels[1]
-  xlabels[1] <- as.character(prt_brks[1])
-  if(str_detect(string=one_label,pattern="^[[:digit:]]+:[[:digit:]]+:[[:digit:]]+$")) {
-    lable <- paste("Time (HH:MM:SS)")
-  } else if(str_detect(string=one_label,pattern="^[[:digit:]]+:[[:digit:]]+$")) {
-    lable <- paste("Time (HH:MM)")
-  } else if(str_detect(string=one_label,pattern="^[[:digit:]]+$")) {
-    lable <- paste("Time (s)")
-  } else if(str_detect(string=one_label,pattern="^[[:alpha:]]+ [[:digit:]]+ [[:digit:]]+:[[:digit:]]+$")) {
-    lable <- paste("Time (Date HH:MM)")
-  } else if(str_detect(string=one_label,pattern="^[[:alpha:]]+ [[:digit:]]+$")) {
-    lable <- paste("Time (Date)")
-  } else {
-    stop("something wrong!")
-  }
-  ggobject <- ggobject + xlab(lable) + scale_x_datetime(breaks=prt_brks,labels=xlabels)
-  return(ggobject)
-}
-
-
-
-
-
-.map_values_to_colors <- function(input, color_palette_manual = NULL) {
-  
-  # TODO: What is this colorfill?
-  if("colorfill" %in% names(input)) {
-    input %>%
-      select(value, colorfill) %>% 
-      distinct ->
-      mapped_colors_df
-    mapped_colors <- mapped_colors_df$colorfill
-    names(mapped_colors) <- mapped_colors_df$value
-    return(mapped_colors)
-  }
-  
-  color_palette <- c(green = "#6fc376", pink = "#f6928f", grey = "#c1c1c1", white = "#ffffff")
-  if(!is.null(color_palette_manual))
-    color_palette[1:length(color_palette_manual)] = color_palette_manual
-  
-  color_mapping <- c(`Data-Unavailable` = "grey", `Non-Producing` = "pink", Producing = "green", `NA` = "white")
-  
-  uniq_values <- unique(input$value)
-  mapped_colors <- color_palette[color_mapping[uniq_values]]
-  names(mapped_colors) <- uniq_values
-  which_nas <- is.na(mapped_colors)
-  num_nas <- sum(which_nas)
-  # Able to understand the result of below code but is'nt it too complex?
-  mapped_colors[which_nas] <- 
-    c(
-      setdiff(color_palette,mapped_colors),
-      rep(unname(color_palette),times = ceiling(num_nas/length(color_palette)))
-    )[seq_len(num_nas)]
-  mapped_colors
-}
-
-
-.overlap_sample_plots <- function(list_of_plots) {
-  all_names <- names(list_of_plots)
-  for(i in seq_along(list_of_plots)) {
-    list_of_plots[[i]]$mapping$colour <- suppressWarnings(ExtractParamfromPath(all_names[i]))
-  }
-  Reduce(f = `+`,x = list_of_plots,init = ggplot()) 
-}
-
-.overlap_event_plots <- function(list_of_plots) {
-  plot_obj <- ggplot()
-  count <- 0L
-  for(single_layer in list_of_plots) {
-    single_layer$mapping$ymin <- count
-    count <- count + 1L
-    single_layer$mapping$ymax <- count
-    plot_obj <- plot_obj + single_layer
-  }
-  plot_obj
-}
-
-#' plots two or more ggplots one below another
-#' @param gtl is a list of ggplot or gtable objects
-#' @param ratio if not null, is a numeric vector of the same length as gtl. Plots are resized to this ratio.
-.rbind_ggplots <- function(gtl, ratio=NULL){ 
-  
-  gtl <- lapply(gtl,function(x) {
-    
-    if(gtable::is.gtable(x)) return(x)
-    ggplotGrob(x)
-  })
-  
-  if(!is.null(ratio)) stopifnot(length(gtl)==length(ratio))
-  
-  num_cols <- vapply(gtl,FUN = ncol,FUN.VALUE = 0L)
-  
-  ## What exactly is this check for?
-  if(length(unique(num_cols))!=1) stop("number of cols are not the same for all the ggplots!")
-  
-  max_widths <- Reduce(f = grid::unit.pmax,x = lapply(gtl,function(x) x$widths))
-  
-  # TODO : Use of cbind_ggplot
-  # multiplying the heights using the ratio
-  gtl <- mapply(x=gtl,y=ratio,FUN = function(x,y) {
-    which_panels <- str_detect(string = x$layout$name,pattern = "panel")
-    starts <- x$layout$t[which_panels]
-    ends <- x$layout$b[which_panels]
-    all_heights_req <- unique(vayu::seqC(from = starts,to = ends,by = 1L)$Sequence)
-    for(i in all_heights_req){
-      x$heights[i] =  x$heights[i] * y
-    }
-    x
-  })
-  
-  all_grobs <- Reduce(f = append,x = lapply(gtl,function(x) x$grobs))
-  
-  all_heights <- Reduce(f = grid::unit.c,x = lapply(gtl,function(x) x$heights))
-  
-  all_rownames <- Reduce(f = c,x = lapply(gtl,function(x) x$rownames))
-  
-  num_rows <- unname(vapply(gtl,FUN = nrow,FUN.VALUE = 0L))
-  num_rows <- c(0,num_rows[-length(num_rows)])
-  num_rows <- cumsum(num_rows)
-  gtl <- mapply(x=gtl,y=num_rows,function(x,y) {
-    x$layout$t <- x$layout$t + y
-    x$layout$b <- x$layout$b + y
-    x
-  })
-  
-  all_layout <- Reduce(f = rbind,x = lapply(gtl,function(x) x$layout))
-  
-  final_plot <- gtl[[1]]
-  final_plot$layout <- all_layout
-  final_plot$heights <- all_heights
-  final_plot$rownames <- all_rownames
-  final_plot$widths <- max_widths
-  final_plot$grobs <- all_grobs
-  
-  final_plot
-}
-
-give_match_status <- function(grep_result, actual_names){
-  no_matches = rowSums(grep_result) < 1
-  if(sum(no_matches))
-    flog.info(sprintf("No matches found for scaling %s", paste(actual_names[no_matches], collapse = ", ")))
-  
-  multiple_matches = rowSums(grep_result) > 1
-  if(sum(multiple_matches))
-    flog.info(sprintf("Multiple matches found for scaling %s", paste(actual_names[multiple_matches], collapse = ", ")))
-  
-  one_match_check <- rowSums(grep_result) == 1
-}
-
-match_grep <- function(grep_vec, actual_names) {
-  
-  grep_result <- vapply(X = names(grep_vec), FUN = stringr::str_detect, string=actual_names,
-                        USE.NAMES = FALSE, FUN.VALUE = logical(length(actual_names)))
-  if(is.vector(grep_result)) grep_result <- matrix(grep_result,nrow = length(actual_names))
-  
-  one_match_check = give_match_status(grep_result, actual_names)
-
-  which_matches <- apply(X = grep_result[one_match_check, ,drop=FALSE], MARGIN = 1, FUN = which)
-  result_vec <- grep_vec[which_matches]
-  names(result_vec) <- actual_names[one_match_check]
-  result_vec
-}
-
-scale_data <- function(timeline_df_subset_range, scale_vals){
-  if(is.null(scale_vals)) return(timeline_df_subset_range)
-  flog.info("Scaling few DIs from 'scale_vals'")
-  numeric_cols = names(timeline_df_subset_range)[timeline_df_subset_range %>% sapply(is.numeric)]
-  grep_match_result <- match_grep(grep_vec = scale_vals, actual_names = names(timeline_df_subset_range[, numeric_cols]))
-  timeline_df_subset_range[names(grep_match_result)] = 
-    lapply(names(grep_match_result), function(x) grep_match_result[x] * timeline_df_subset_range[[x]])
-  timeline_df_subset_range
-}
-
-.match_grep_vec <- function(grep_vec, char_vec) {
-  ans <- rep(x = NA_character_,times = length(grep_vec))
-  if(length(char_vec)==0) return(ans)
-  grep_result <- vapply(X = grep_vec,FUN = stringr::str_detect,string=char_vec,USE.NAMES = FALSE,FUN.VALUE = logical(length(char_vec)))
-  if(is.vector(grep_result)) grep_result <- matrix(grep_result,nrow = length(char_vec))
-  one_match_check <- colSums(grep_result)==1
-  which_matches <- apply(X = grep_result,MARGIN = 2,FUN = which)
-  ans[one_match_check] <- char_vec[which_matches]
-  ans
-}
-
-subset_data_into_time_range <- function(timeline_df_subset, start_time, end_time, ts_col){
-  
-  #finding start and end time limits, only when the limits are not already specified
-  time_range <- range(timeline_df_subset[[ts_col]])
-  if(!is.null(start_time)) time_range[1] <- start_time
-  if(!is.null(end_time))   time_range[2] <- end_time
-  
-  # function to subset data frame into time range
-  timeline_df_subset %>% filter(timeline_df_subset[[ts_col]] >= time_range[1], timeline_df_subset[[ts_col]] <= time_range[2])
-  
-}
 
 #' @title Plotting function (standard style)
 #' @description Plots time series data of Event type (character type data) as stripe charts, Sample data type (numeric type data) as step charts.
@@ -289,29 +58,31 @@ PlotDataItems <- function(timeline_df, data_grep="", start_time=NULL, end_time=N
   
   
   timeline_df_subset_range = subset_data_into_time_range(timeline_df_subset, start_time, end_time, ts_col)
-  timeline_cleaned = scale_data(timeline_df_subset_range, scale_vals)
+  numeric_cols = names(timeline_df_subset_range)[timeline_df_subset_range %>% sapply(is.numeric)]
+  state_cols = names(timeline_cleaned)[timeline_cleaned %>% sapply(is.character)]
   
-  state_plots <- create_state_plots(timeline_cleaned, ts_col)
-  numeric_plots <- create_numeric_plots(timeline_cleaned, ts_col)  
+  timeline_cleaned = scale_data(timeline_df_subset_range, scale_vals, numeric_cols)
+  actual_ylimits <- get_plot_limits(timeline_cleaned, numeric_cols, ylimits)
+  
+  state_plots <- create_state_plots(timeline_cleaned, ts_col, state_cols) %>% 
+    add_legend_to_plots(add_legend) %>% 
+    add_colors_to_state_plots(color_palette_manual)
+  
+  numeric_plots <- create_numeric_plots(timeline_cleaned, ts_col, numeric_cols, actual_ylimits) %>% 
+    add_legend_to_plots(add_legend)
   
   # combined_plot_list <- create_overlap_plots(overlap_plots, line_plots, event_plots)
   # combined_plot_list <- create_non_overlap_plots(numeric_plots, state_plots)
 
-  # plot_type = combined_plot_list$plot_type
-  # all_plots = combined_plot_list$all_plots
-  # 
-  all_plots <- legendify_and_colorify_the_plots(all_plots, plot_type, add_legend, color_palette_manual)
-  
-  default_ylimits <- get_plot_limits(all_plots, plot_type, ylimits)
-  all_plots <- mapply(FUN = function(x,y) x + coord_cartesian(xlim = lims,ylim = y),x=all_plots,y=default_ylimits,SIMPLIFY = FALSE,USE.NAMES = TRUE)
-  
+  all_plots <- c(state_plots, numeric_plots)
+
   all_plots <- add_titles_to_the_plot(all_plots, titles)
-  all_plots <- add_labels_to_the_plot(all_plots, plot_type, xlabels, ylabels)
+  # all_plots <- add_labels_to_the_plot(all_plots, plot_type, xlabels, ylabels)
   
   ## Below function uses some intelligence to label X axis and also add x ticks with breaks
-  all_plots <- sapply(X = all_plots,FUN = .AddExtrasToGGPlot,simplify = FALSE,USE.NAMES = TRUE,xrange=lims)
+  # all_plots <- sapply(X = all_plots,FUN = .AddExtrasToGGPlot,simplify = FALSE,USE.NAMES = TRUE,xrange=lims)
   
-  if(returnGG) return(all_plots)
+  # if(returnGG) return(all_plots)
   
   align_and_draw_the_plots(all_plots, plot_type, event_plot_size, save_path)  
   #return filtered data invisibly
