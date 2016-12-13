@@ -223,21 +223,47 @@
   Reduce(bind2, gtl)
 }
 
-.match_grep <- function(grep_vec,actual_names) {
+give_match_status <- function(grep_result, actual_names){
+  no_matches = rowSums(grep_result) < 1
+  if(sum(no_matches))
+    flog.info(sprintf("No matches found for scaling %s", paste(actual_names[no_matches], collapse = ", ")))
   
-  grep_result <- vapply(X = names(grep_vec),FUN = str_detect,string=actual_names,USE.NAMES = FALSE,FUN.VALUE = logical(length(actual_names)))
+  multiple_matches = rowSums(grep_result) > 1
+  if(sum(multiple_matches))
+    flog.info(sprintf("Multiple matches found for scaling %s", paste(actual_names[multiple_matches], collapse = ", ")))
+  
+  one_match_check <- rowSums(grep_result) == 1
+}
+
+match_grep <- function(grep_vec, actual_names) {
+  
+  grep_result <- vapply(X = names(grep_vec), FUN = stringr::str_detect, string=actual_names,
+                        USE.NAMES = FALSE, FUN.VALUE = logical(length(actual_names)))
   if(is.vector(grep_result)) grep_result <- matrix(grep_result,nrow = length(actual_names))
-  one_match_check <- rowSums(grep_result)==1
-  which_matches <- apply(X = grep_result[one_match_check,,drop=FALSE],MARGIN = 1,FUN = which)
+  
+  one_match_check = give_match_status(grep_result, actual_names)
+
+  which_matches <- apply(X = grep_result[one_match_check, ,drop=FALSE], MARGIN = 1, FUN = which)
   result_vec <- grep_vec[which_matches]
   names(result_vec) <- actual_names[one_match_check]
   result_vec
 }
 
+scale_data <- function(timeline_df_subset_range, scale_vals){
+  if(is.null(scale_vals)) return(timeline_df_subset_range)
+  
+  flog.info("Scaling few DIs from 'scale_vals'")
+  numeric_cols = names(timeline_df_subset_range)[timeline_df_subset_range %>% sapply(is.numeric)]
+  grep_match_result <- match_grep(grep_vec = scale_vals, actual_names = names(timeline_df_subset_range[, numeric_cols]))
+  timeline_df_subset_range[names(grep_match_result)] = 
+    lapply(names(grep_match_result), function(x) grep_match_result[x] * timeline_df_subset_range[x])
+  timeline_df_subset_range
+}
+
 .match_grep_vec <- function(grep_vec, char_vec) {
   ans <- rep(x = NA_character_,times = length(grep_vec))
   if(length(char_vec)==0) return(ans)
-  grep_result <- vapply(X = grep_vec,FUN = str_detect,string=char_vec,USE.NAMES = FALSE,FUN.VALUE = logical(length(char_vec)))
+  grep_result <- vapply(X = grep_vec,FUN = stringr::str_detect,string=char_vec,USE.NAMES = FALSE,FUN.VALUE = logical(length(char_vec)))
   if(is.vector(grep_result)) grep_result <- matrix(grep_result,nrow = length(char_vec))
   one_match_check <- colSums(grep_result)==1
   which_matches <- apply(X = grep_result,MARGIN = 2,FUN = which)
@@ -245,6 +271,17 @@
   ans
 }
 
+subset_data_into_time_range <- function(timeline_df_subset, start_time, end_time, ts_col){
+  
+  #finding start and end time limits, only when the limits are not already specified
+  time_range <- range(timeline_df_subset[[ts_col]])
+  if(!is.null(start_time)) time_range[1] <- start_time
+  if(!is.null(end_time))   time_range[2] <- end_time
+  
+  # function to subset data frame into time range
+  timeline_df_subset %>% filter(timeline_df_subset[[ts_col]] >= time_range[1], timeline_df_subset[[ts_col]] <= time_range[2])
+  
+}
 
 #' @title Plotting function (standard style)
 #' @description Plots time series data of Event type (character type data) as stripe charts, Sample data type (numeric type data) as step charts.
@@ -276,9 +313,9 @@
 #' e.g.: overlap_plots="(abc,pqr),(pqr),(xyz,123,345)", 
 #' overlap_plots = "(S1speed),(path_feedrate1),(executi,CONTROLLER_MODE)"
 #' @return list of the filtered data will be returned invisibly 
-PlotDataItems <- function(timeline_df, dataGrep="", start_time=NULL, end_time=NULL,
+PlotDataItems <- function(timeline_df, data_grep="", start_time=NULL, end_time=NULL,
                           invert = F, ylimits=NULL, scale_vals=NULL, titles=NULL, 
-                          xlabels=NULL, ylabels=NULL, save_path = NULL, ifPlotAsSample=NULL,
+                          xlabels=NULL, ylabels=NULL, save_path = NULL, 
                           returnGG=FALSE, add_legend=TRUE, event_plot_size=0.6,
                           overlap_plots=NULL, color_palette_manual = NULL) {
   
@@ -289,14 +326,9 @@ PlotDataItems <- function(timeline_df, dataGrep="", start_time=NULL, end_time=NU
   # state columns SHOULD be factors or characters.
   # numeric columns should be numeric
 
-  
   # convert start and end into POSIXct objects
   if(!is.null(start_time)) start_time <- toPOSIXct(start_time)
   if(!is.null(end_time)) end_time <- toPOSIXct(end_time)
-  
-  # getting the length and input names
-  # len_in <- length(input)
-  # nam_in <- names(input)
   
   # grepping the required data items
   ts_col = names(timeline_df)[timeline_df %>% sapply(is.POSIXct)]
@@ -304,82 +336,14 @@ PlotDataItems <- function(timeline_df, dataGrep="", start_time=NULL, end_time=NU
   timeline_df_subset <- timeline_df[union(ts_col, which_grep)]
   
   # function check for na and show warning and remove na
-  
-  state_cols = names(timeline_df)[timeline_df %>% sapply(is.character)]
-  numeric_cols = names(timeline_df)[timeline_df %>% sapply(is.numeric)]
-  
-  #finding start and end time limits, only when the limits are not already specified
-  time_range <- range(timeline_df_subset[[ts_col]])
-  if(!is.null(start_time)) time_range[1] <- start_time
-  if(!is.null(end_time))   time_range[2] <- end_time
-  
-  # function to subset data frame into time range
-  timeline_df_subset_range = timeline_df_subset %>%
-    filter(timeline_df_subset[[ts_col]] >= time_range[1], timeline_df_subset[[ts_col]] <= time_range[2])
-  
-  # TODO: scaleVals option is used here
-  # Only value column is multipled. Should the name of the column to be multiplied be made an input?
-  # Should be careful with this, if the value is event, it errors out
-  if(!is.null(scaleVals)) {
-    message("Scaling few DIs from 'scaleVals'")
-    grep_match_result <- .match_grep(grep_vec = scaleVals,actual_names = names(timeline_df_subset_range))
-    for(i in names(grep_match_result)) {
-      DataList[[i]]$value <- DataList[[i]]$value * grep_match_result[i]
-    }
-  }
+  # state_cols = names(timeline_df_subset)[timeline_df_subset %>% sapply(is.character)]
   
   
-  # if names are not defined, creating names from the actual statement given for input 
-  # We can remove the below and make it compulsory for all lists to be named and give default name to
-  # unnamed lists 
+  timeline_df_subset_range = subset_data_into_time_range(timeline_df_subset, start_time, end_time, ts_col)
+  timeline_cleaned = scale_data(timeline_df_subset_range, scale_vals)
   
-  # if(is.null(nam_in) || any(nam_in %in% "")) {
-  #   # TODO: Using the name of the input object passed, we are trying to name every item of the list, how can we use this?
-  #   names(input) <- get_new_names(input_statement, nam_in, len_in)
-  # }
-  
-  # combined_data_sor_list <- organize_input_to_df(nam_in, len_in, input)
-  
-  # SorE = combined_data_sor_list$SorE
-  # data_list = combined_data_sor_list$data_list
-  
-  # which_grep <- grep(dataGrep, names(data_list), invert=invert)
-  # data_list <- data_list[which_grep]
-  # SorE <- SorE[which_grep]
-  
-  
-  
-  
-  #finding start and end time limits, only when the limits are not already specified
-  lims <- get_start_and_end_time_limits(start_time, end_time, data_list)
-  
-  if( !(is.null(start_time) && is.null(end_time)) ) {
-    data_list <- filter_data_list_limits(data_list, lims)
-  }
-  
-  # IFPLOTASSAMPLE option is used here. The name of the item of the list (name_othercols) should be passed as c(gegv = TRUE)
-  # Only the items where all the column names other than timestamp has the 
-  if(!is.null(ifPlotAsSample)) {
-    SorE <- modify_for_sample_plot(SorE, data_list, ifPlotAsSample)
-  }
-  
-  # scale_vals option is used here
-  # Similar input type as of ifplotassample
-  # Only value column is multipled. Should the name of the column to be multiplied be made an input?
-  # Should be careful with this, if the value is event, it errors out
-  if(!is.null(scale_vals)) {
-    data_list <- scale_vals_data(data_list, scale_vals)
-  }
-  
-  cleaned_data <- delete_empty_data_items(data_list, SorE)
-  data_list <- cleaned_data$data_list
-  SorE <- cleaned_data$SorE
-  
-  ## To be noted that in case of a list with ts,value and other columns, only value is taken
-  ## i.e, the new list has form TS, Value with the name of the column already appended to the title.
-  
-  event_plots <- create_event_plots(data_list, SorE, lims)
-  line_plots <- create_line_plots(data_list, SorE)  
+  event_plots <- create_state_plots(timeline_cleaned)
+  line_plots <- create_numeric_plots(timeline_cleaned)  
   
   if(!is.null(overlap_plots)) {
     combined_plot_list <- create_overlap_plots(overlap_plots, line_plots, event_plots)

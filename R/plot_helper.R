@@ -1,10 +1,19 @@
-create_event_plots <- function(data_list, SorE, lims){
-  message("creating event plot layers")
-  event_plots <- sapply(X = data_list[SorE %in% "Event"], 
-                        simplify = FALSE,USE.NAMES = TRUE, 
-                        FUN = .generate_event_plot_layer,
-                        end_time = lims[2]
-  )
+
+generate_event_plot_layer <- function(data_to_plot, end_time=NULL) {
+  start_values = data_to_plot$timestamp[1:(nrow(data_to_plot) - 1)]
+  end_values = data_to_plot$timestamp[2:nrow(data_to_plot)]
+  
+  geom_rect(data=data_to_plot[-nrow(data_to_plot), ],
+            aes(xmin = start_values, xmax = end_values,
+                ymin = 0L, ymax = 1L, fill=value)) 
+}
+
+create_state_plots <- function(timeline_cleaned, ts_col){
+  flog.info("creating state plot layers")
+  state_cols = names(timeline_cleaned)[timeline_cleaned %>% sapply(is.character)]
+  state_plots <- lapply(state_cols, function(x)
+    generate_event_plot_layer(timeline_cleaned[, c(ts_col, x)]))
+  
   event_plots <- event_plots[!vapply(X = event_plots,FUN = is.null,FUN.VALUE = FALSE,USE.NAMES = FALSE)]
   return(event_plots)
 }
@@ -221,25 +230,4 @@ plot_time_series <- function(list_of_dfs) {
     y_value <- y_value + 1
   }
   print(ggobj)
-}
-
-.generate_event_plot_layer <- function(data_to_plot, end_time=NULL) {
-  
-  if( "start" %notin% names(data_to_plot) ) {
-    if(is.unsorted(data_to_plot$timestamp))
-      data_to_plot <- data_to_plot[order(data_to_plot$timestamp,na.last=FALSE),]
-    if(is.null(end_time)) {
-      all_times <- c(data_to_plot$timestamp,toPOSIXct("2100-01-01")) 
-    } else {
-      all_times <- c(data_to_plot$timestamp,toPOSIXct(end_time))
-    }
-    data_to_plot$timestamp <- NULL
-    data_to_plot$start <- all_times[-length(all_times)]
-    data_to_plot$end <- all_times[-1L]
-  }
-  
-  if( anyNA(data_to_plot$start) || anyNA(data_to_plot$end) )
-    stop("NAs found in time columns!")
-  
-  geom_rect(data=data_to_plot,aes(xmin = start, xmax = end, ymin = 0L, ymax = 1L,fill=value)) 
 }
