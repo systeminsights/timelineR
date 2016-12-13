@@ -58,139 +58,6 @@
 
 
 
-#' @title Plotting function (standard style)
-#' @description Plots time series data of Event type (character type data) as stripe charts, Sample data type (numeric type data) as step charts.
-#' @param input is a data.frame or, list of data.frames or DataItems
-#' @param dataGrep is a regex expression used to select some of input objects to plot. 
-#' e.g: dataGrep="a|e"
-#' @param invert TRUE if you want to exclude the items that match the dataGrep, similar to invert argument in grep function
-#' @param start_time is left end point of the plot
-#' e.g: start_time="2014-01-30 09:53:02.792663 UTC" or start_time=1391075599
-#' @param end_time is right end point of the plot
-#' @param ylimits this is used to determine the limits on the y-axis for Sample plots
-#' e.g: ylimits=list(a=c(0,100),d=c(-100,50)). Any variable that has "a" in the name will be plotted with limits (0,100).
-#' @param scale_vals used to multiply the values by a factor
-#' e.g: scale_valse=c(a=10), matching data will be multiplied by 10
-#' @param titles change titles of the plot
-#' e.g: title=c(ab="first plot",cd="second plot")
-#' @param xlabels change the labels on x-axis of plots
-#' e.g: xlabel=c(ab="time",cd="count")
-#' @param ylabels change the labels on y-axis of plots
-#' e.g: ylabel=c(ab="value",bcd="tmeperature")
-#' @param returnGG if TRUE, GGplot objects will be returned for further manual processing
-#' @param add_legend TRUE (default) if legend is needed
-#' @param event_plot_size proportion of event plot size to the sample plot size
-#' @param savePath if a file_path is specified, then the image will be saved to that location.
-#' @param ifPlotAsSample for plotting event variables as sample overriding the default stripe chart behavior
-#' e.g.: ifPlotAsSample=c(xyz=TRUE)
-#' @param overlap_plots specify the data items to be overlapped. Plots of the same type can only be overlapped for now.
-#' This argument can be used to specify the order of plots.
-#' e.g.: overlap_plots="(abc,pqr),(pqr),(xyz,123,345)", 
-#' overlap_plots = "(S1speed),(path_feedrate1),(executi,CONTROLLER_MODE)"
-#' @return list of the filtered data will be returned invisibly 
-PlotDataItems <- function(input, dataGrep="", start_time=NULL, end_time=NULL,
-                          invert = F, ylimits=NULL, scale_vals=NULL, titles=NULL, 
-                          xlabels=NULL, ylabels=NULL, savePath = NULL, ifPlotAsSample=NULL,
-                          returnGG=FALSE, add_legend=TRUE, event_plot_size=0.6,
-                          overlap_plots=NULL, color_palette_manual = NULL) {
-  
-  # TODO: This function is not able to directly plot single_device_mtc@DataItemlist, .rbind_ggplots failing
-  # It should work for a device object right? Or just for a list containing dataframes
-  
-  # convert start and end into POSIXct objects
-  if(!is.null(start_time)) start_time <- toPOSIXct(start_time)
-  if(!is.null(end_time)) end_time <- toPOSIXct(end_time)
-  
-  
-  # useful later to set names to the input, if they are not specified already
-  # TODO: Example of using the above functionality
-  input_statement <- deparse(substitute(input))
-  # basic operating object is a list, so converting to list if it is already not
-  if(!is(object = input,class2 = "list")) {
-    input <- list(input)
-    names(input) <- input_statement
-  }
-  
-  # getting the length and input names
-  len_in <- length(input)
-  nam_in <- names(input)
-  
-  # if names are not defined, creating names from the actual statement given for input 
-  # We can remove the below and make it compulsory for all lists to be named and give default name to
-  # unnamed lists 
-  
-  if(is.null(nam_in) || any(nam_in %in% "")) {
-    # TODO: Using the name of the input object passed, we are trying to name every item of the list, how can we use this?
-    names(input) <- get_new_names(input_statement, nam_in, len_in)
-  }
-  
-  combined_data_sor_list <- organize_input_to_df(nam_in, len_in, input)
-  SorE = combined_data_sor_list$SorE
-  data_list = combined_data_sor_list$data_list
-  
-  which_grep <- grep(dataGrep, names(data_list), invert=invert)
-  data_list <- data_list[which_grep]
-  SorE <- SorE[which_grep]
-  
-  #finding start and end time limits, only when the limits are not already specified
-  lims <- get_start_and_end_time_limits(start_time, end_time, data_list)
-  
-  if( !(is.null(start_time) && is.null(end_time)) ) {
-    data_list <- filter_data_list_limits(data_list, lims)
-  }
-  
-  # IFPLOTASSAMPLE option is used here. The name of the item of the list (name_othercols) should be passed as c(gegv = TRUE)
-  # Only the items where all the column names other than timestamp has the 
-  if(!is.null(ifPlotAsSample)) {
-    SorE <- modify_for_sample_plot(SorE, data_list, ifPlotAsSample)
-  }
-  
-  # scale_vals option is used here
-  # Similar input type as of ifplotassample
-  # Only value column is multipled. Should the name of the column to be multiplied be made an input?
-  # Should be careful with this, if the value is event, it errors out
-  if(!is.null(scale_vals)) {
-    data_list <- scale_vals_data(data_list, scale_vals)
-  }
-  
-  cleaned_data <- delete_empty_data_items(data_list, SorE)
-  data_list <- cleaned_data$data_list
-  SorE <- cleaned_data$SorE
-  
-  ## To be noted that in case of a list with ts,value and other columns, only value is taken
-  ## i.e, the new list has form TS, Value with the name of the column already appended to the title.
-  
-  event_plots <- create_event_plots(data_list, SorE, lims)
-  line_plots <- create_line_plots(data_list, SorE)  
-  
-  if(!is.null(overlap_plots)) {
-    combined_plot_list <- create_overlap_plots(overlap_plots, line_plots, event_plots)
-  } 
-  else {
-    combined_plot_list <- create_non_overlap_plots(line_plots, event_plots)
-  }
-  plot_type = combined_plot_list$plot_type
-  all_plots = combined_plot_list$all_plots
-  
-  all_plots <- legendify_and_colorify_the_plots(all_plots, plot_type, add_legend, color_palette_manual)
-  
-  default_ylimits <- get_plot_limits(all_plots, plot_type, ylimits)
-  all_plots <- mapply(FUN = function(x,y) x + coord_cartesian(xlim = lims,ylim = y),x=all_plots,y=default_ylimits,SIMPLIFY = FALSE,USE.NAMES = TRUE)
-  
-  all_plots <- add_titles_to_the_plot(all_plots, titles)
-  all_plots <- add_labels_to_the_plot(all_plots, plot_type, xlabels, ylabels)
-  
-  ## Below function uses some intelligence to label X axis and also add x ticks with breaks
-  all_plots <- sapply(X = all_plots,FUN = .AddExtrasToGGPlot,simplify = FALSE,USE.NAMES = TRUE,xrange=lims)
-  
-  if(returnGG) return(all_plots)
-  
-  align_and_draw_the_plots(all_plots, plot_type, event_plot_size, savePath)  
-  #return filtered data invisibly
-  message("Plotting DONE!!!")
-  return(invisible(data_list))
-}
-
 
 .map_values_to_colors <- function(input, color_palette_manual = NULL) {
   
@@ -376,4 +243,128 @@ PlotDataItems <- function(input, dataGrep="", start_time=NULL, end_time=NULL,
   which_matches <- apply(X = grep_result,MARGIN = 2,FUN = which)
   ans[one_match_check] <- char_vec[which_matches]
   ans
+}
+
+
+#' @title Plotting function (standard style)
+#' @description Plots time series data of Event type (character type data) as stripe charts, Sample data type (numeric type data) as step charts.
+#' @param input is a data.frame or, list of data.frames or DataItems
+#' @param dataGrep is a regex expression used to select some of input objects to plot. 
+#' e.g: dataGrep="a|e"
+#' @param invert TRUE if you want to exclude the items that match the dataGrep, similar to invert argument in grep function
+#' @param start_time is left end point of the plot
+#' e.g: start_time="2014-01-30 09:53:02.792663 UTC" or start_time=1391075599
+#' @param end_time is right end point of the plot
+#' @param ylimits this is used to determine the limits on the y-axis for Sample plots
+#' e.g: ylimits=list(a=c(0,100),d=c(-100,50)). Any variable that has "a" in the name will be plotted with limits (0,100).
+#' @param scale_vals used to multiply the values by a factor
+#' e.g: scale_valse=c(a=10), matching data will be multiplied by 10
+#' @param titles change titles of the plot
+#' e.g: title=c(ab="first plot",cd="second plot")
+#' @param xlabels change the labels on x-axis of plots
+#' e.g: xlabel=c(ab="time",cd="count")
+#' @param ylabels change the labels on y-axis of plots
+#' e.g: ylabel=c(ab="value",bcd="tmeperature")
+#' @param returnGG if TRUE, GGplot objects will be returned for further manual processing
+#' @param add_legend TRUE (default) if legend is needed
+#' @param event_plot_size proportion of event plot size to the sample plot size
+#' @param savePath if a file_path is specified, then the image will be saved to that location.
+#' @param ifPlotAsSample for plotting event variables as sample overriding the default stripe chart behavior
+#' e.g.: ifPlotAsSample=c(xyz=TRUE)
+#' @param overlap_plots specify the data items to be overlapped. Plots of the same type can only be overlapped for now.
+#' This argument can be used to specify the order of plots.
+#' e.g.: overlap_plots="(abc,pqr),(pqr),(xyz,123,345)", 
+#' overlap_plots = "(S1speed),(path_feedrate1),(executi,CONTROLLER_MODE)"
+#' @return list of the filtered data will be returned invisibly 
+PlotDataItems <- function(input, dataGrep="", start_time=NULL, end_time=NULL,
+                          invert = F, ylimits=NULL, scale_vals=NULL, titles=NULL, 
+                          xlabels=NULL, ylabels=NULL, savePath = NULL, ifPlotAsSample=NULL,
+                          returnGG=FALSE, add_legend=TRUE, event_plot_size=0.6,
+                          overlap_plots=NULL, color_palette_manual = NULL) {
+  
+  # TODO: This function is not able to directly plot single_device_mtc@DataItemlist, .rbind_ggplots failing
+  # It should work for a device object right? Or just for a list containing dataframes
+  
+  # convert start and end into POSIXct objects
+  if(!is.null(start_time)) start_time <- toPOSIXct(start_time)
+  if(!is.null(end_time)) end_time <- toPOSIXct(end_time)
+  
+  # getting the length and input names
+  len_in <- length(input)
+  nam_in <- names(input)
+  
+  # if names are not defined, creating names from the actual statement given for input 
+  # We can remove the below and make it compulsory for all lists to be named and give default name to
+  # unnamed lists 
+  
+  # if(is.null(nam_in) || any(nam_in %in% "")) {
+  #   # TODO: Using the name of the input object passed, we are trying to name every item of the list, how can we use this?
+  #   names(input) <- get_new_names(input_statement, nam_in, len_in)
+  # }
+  
+  # combined_data_sor_list <- organize_input_to_df(nam_in, len_in, input)
+  SorE = combined_data_sor_list$SorE
+  data_list = combined_data_sor_list$data_list
+  
+  which_grep <- grep(dataGrep, names(data_list), invert=invert)
+  data_list <- data_list[which_grep]
+  SorE <- SorE[which_grep]
+  
+  #finding start and end time limits, only when the limits are not already specified
+  lims <- get_start_and_end_time_limits(start_time, end_time, data_list)
+  
+  if( !(is.null(start_time) && is.null(end_time)) ) {
+    data_list <- filter_data_list_limits(data_list, lims)
+  }
+  
+  # IFPLOTASSAMPLE option is used here. The name of the item of the list (name_othercols) should be passed as c(gegv = TRUE)
+  # Only the items where all the column names other than timestamp has the 
+  if(!is.null(ifPlotAsSample)) {
+    SorE <- modify_for_sample_plot(SorE, data_list, ifPlotAsSample)
+  }
+  
+  # scale_vals option is used here
+  # Similar input type as of ifplotassample
+  # Only value column is multipled. Should the name of the column to be multiplied be made an input?
+  # Should be careful with this, if the value is event, it errors out
+  if(!is.null(scale_vals)) {
+    data_list <- scale_vals_data(data_list, scale_vals)
+  }
+  
+  cleaned_data <- delete_empty_data_items(data_list, SorE)
+  data_list <- cleaned_data$data_list
+  SorE <- cleaned_data$SorE
+  
+  ## To be noted that in case of a list with ts,value and other columns, only value is taken
+  ## i.e, the new list has form TS, Value with the name of the column already appended to the title.
+  
+  event_plots <- create_event_plots(data_list, SorE, lims)
+  line_plots <- create_line_plots(data_list, SorE)  
+  
+  if(!is.null(overlap_plots)) {
+    combined_plot_list <- create_overlap_plots(overlap_plots, line_plots, event_plots)
+  } 
+  else {
+    combined_plot_list <- create_non_overlap_plots(line_plots, event_plots)
+  }
+  plot_type = combined_plot_list$plot_type
+  all_plots = combined_plot_list$all_plots
+  
+  all_plots <- legendify_and_colorify_the_plots(all_plots, plot_type, add_legend, color_palette_manual)
+  
+  default_ylimits <- get_plot_limits(all_plots, plot_type, ylimits)
+  all_plots <- mapply(FUN = function(x,y) x + coord_cartesian(xlim = lims,ylim = y),x=all_plots,y=default_ylimits,SIMPLIFY = FALSE,USE.NAMES = TRUE)
+  
+  all_plots <- add_titles_to_the_plot(all_plots, titles)
+  all_plots <- add_labels_to_the_plot(all_plots, plot_type, xlabels, ylabels)
+  
+  ## Below function uses some intelligence to label X axis and also add x ticks with breaks
+  all_plots <- sapply(X = all_plots,FUN = .AddExtrasToGGPlot,simplify = FALSE,USE.NAMES = TRUE,xrange=lims)
+  
+  if(returnGG) return(all_plots)
+  
+  align_and_draw_the_plots(all_plots, plot_type, event_plot_size, savePath)  
+  #return filtered data invisibly
+  message("Plotting DONE!!!")
+  return(invisible(data_list))
 }
