@@ -268,7 +268,7 @@
 #' @param returnGG if TRUE, GGplot objects will be returned for further manual processing
 #' @param add_legend TRUE (default) if legend is needed
 #' @param event_plot_size proportion of event plot size to the sample plot size
-#' @param savePath if a file_path is specified, then the image will be saved to that location.
+#' @param save_path if a file_path is specified, then the image will be saved to that location.
 #' @param ifPlotAsSample for plotting event variables as sample overriding the default stripe chart behavior
 #' e.g.: ifPlotAsSample=c(xyz=TRUE)
 #' @param overlap_plots specify the data items to be overlapped. Plots of the same type can only be overlapped for now.
@@ -276,22 +276,58 @@
 #' e.g.: overlap_plots="(abc,pqr),(pqr),(xyz,123,345)", 
 #' overlap_plots = "(S1speed),(path_feedrate1),(executi,CONTROLLER_MODE)"
 #' @return list of the filtered data will be returned invisibly 
-PlotDataItems <- function(input, dataGrep="", start_time=NULL, end_time=NULL,
+PlotDataItems <- function(timeline_df, dataGrep="", start_time=NULL, end_time=NULL,
                           invert = F, ylimits=NULL, scale_vals=NULL, titles=NULL, 
-                          xlabels=NULL, ylabels=NULL, savePath = NULL, ifPlotAsSample=NULL,
+                          xlabels=NULL, ylabels=NULL, save_path = NULL, ifPlotAsSample=NULL,
                           returnGG=FALSE, add_legend=TRUE, event_plot_size=0.6,
                           overlap_plots=NULL, color_palette_manual = NULL) {
   
-  # TODO: This function is not able to directly plot single_device_mtc@DataItemlist, .rbind_ggplots failing
-  # It should work for a device object right? Or just for a list containing dataframes
+  # This function takes in a data.frame of format
+  # |Timestamp|Event_A|Event_B|Sample_A|Sample_B|
+  # |2011-01-01 00:00:00.000Z|Type_A|Type_B|10|20|
+  # The data.frame should have one timestamp columns, and one or more state and numeric columns
+  # state columns SHOULD be factors or characters.
+  # numeric columns should be numeric
+
   
   # convert start and end into POSIXct objects
   if(!is.null(start_time)) start_time <- toPOSIXct(start_time)
   if(!is.null(end_time)) end_time <- toPOSIXct(end_time)
   
   # getting the length and input names
-  len_in <- length(input)
-  nam_in <- names(input)
+  # len_in <- length(input)
+  # nam_in <- names(input)
+  
+  # grepping the required data items
+  ts_col = names(timeline_df)[timeline_df %>% sapply(is.POSIXct)]
+  which_grep <- names(timeline_df)[grep(data_grep, names(timeline_df), invert=invert)]
+  timeline_df_subset <- timeline_df[union(ts_col, which_grep)]
+  
+  # function check for na and show warning and remove na
+  
+  state_cols = names(timeline_df)[timeline_df %>% sapply(is.character)]
+  numeric_cols = names(timeline_df)[timeline_df %>% sapply(is.numeric)]
+  
+  #finding start and end time limits, only when the limits are not already specified
+  time_range <- range(timeline_df_subset[[ts_col]])
+  if(!is.null(start_time)) time_range[1] <- start_time
+  if(!is.null(end_time))   time_range[2] <- end_time
+  
+  # function to subset data frame into time range
+  timeline_df_subset_range = timeline_df_subset %>%
+    filter(timeline_df_subset[[ts_col]] >= time_range[1], timeline_df_subset[[ts_col]] <= time_range[2])
+  
+  # TODO: scaleVals option is used here
+  # Only value column is multipled. Should the name of the column to be multiplied be made an input?
+  # Should be careful with this, if the value is event, it errors out
+  if(!is.null(scaleVals)) {
+    message("Scaling few DIs from 'scaleVals'")
+    grep_match_result <- .match_grep(grep_vec = scaleVals,actual_names = names(timeline_df_subset_range))
+    for(i in names(grep_match_result)) {
+      DataList[[i]]$value <- DataList[[i]]$value * grep_match_result[i]
+    }
+  }
+  
   
   # if names are not defined, creating names from the actual statement given for input 
   # We can remove the below and make it compulsory for all lists to be named and give default name to
@@ -303,12 +339,16 @@ PlotDataItems <- function(input, dataGrep="", start_time=NULL, end_time=NULL,
   # }
   
   # combined_data_sor_list <- organize_input_to_df(nam_in, len_in, input)
-  SorE = combined_data_sor_list$SorE
-  data_list = combined_data_sor_list$data_list
   
-  which_grep <- grep(dataGrep, names(data_list), invert=invert)
-  data_list <- data_list[which_grep]
-  SorE <- SorE[which_grep]
+  # SorE = combined_data_sor_list$SorE
+  # data_list = combined_data_sor_list$data_list
+  
+  # which_grep <- grep(dataGrep, names(data_list), invert=invert)
+  # data_list <- data_list[which_grep]
+  # SorE <- SorE[which_grep]
+  
+  
+  
   
   #finding start and end time limits, only when the limits are not already specified
   lims <- get_start_and_end_time_limits(start_time, end_time, data_list)
@@ -363,7 +403,7 @@ PlotDataItems <- function(input, dataGrep="", start_time=NULL, end_time=NULL,
   
   if(returnGG) return(all_plots)
   
-  align_and_draw_the_plots(all_plots, plot_type, event_plot_size, savePath)  
+  align_and_draw_the_plots(all_plots, plot_type, event_plot_size, save_path)  
   #return filtered data invisibly
   message("Plotting DONE!!!")
   return(invisible(data_list))
