@@ -109,23 +109,18 @@ add_titles_to_the_plot <- function(all_plots, titles){
 }
 
 
-add_labels_to_the_plot <- function(all_plots, plot_type, xlabels, ylabels){
-  if(!is.null(xlabels)) {
-    message("Adding new x-labels")
-    grep_match_result <- .match_grep(grep_vec = xlabels,actual_names = names(all_plots))
-    all_plots[names(grep_match_result)] <- 
-      mapply(FUN = function(x,y) x+xlab(y),x=all_plots[names(grep_match_result)],y=unname(grep_match_result),SIMPLIFY = FALSE,USE.NAMES = TRUE)
-  }
-  
-  default_ylabs <- c("Sample"="Value","Event"="State")[plot_type]
-  names(default_ylabs) <- names(plot_type)
+add_ylabels_to_the_plot <- function(all_plots, ylabels, state_cols){
+  default_ylabs <- sapply(names(all_plots), function(x){
+    if(x %in% state_cols) return("State") else return("Numeric")
+  })
+  names(default_ylabs) <- names(all_plots)
   if(!is.null(ylabels)) {
-    message("Adding new y-labels")
-    grep_match_result <- .match_grep(grep_vec = ylabels,actual_names = names(all_plots))
+    flog.info("Adding new y-labels")
+    grep_match_result <- match_grep(grep_vec = ylabels, actual_names = names(all_plots))
     default_ylabs[names(grep_match_result)] <- grep_match_result
   }
   default_ylabs <- default_ylabs[names(all_plots)]
-  all_plots <- mapply(FUN = function(x,y) x+ylab(y),x=all_plots,y=default_ylabs,SIMPLIFY = FALSE,USE.NAMES = TRUE)
+  all_plots <- mapply(FUN = function(x,y) x + ylab(y), x = all_plots, y = default_ylabs, SIMPLIFY = FALSE, USE.NAMES = TRUE)
   return(all_plots)
 }
 
@@ -150,6 +145,7 @@ align_and_draw_the_plots <- function(all_plots, numeric_cols, state_cols, event_
   
 }
 
+#' If need arises to add xlabel, they can be added as prefix by passing to this function
 add_pretty_breaks_and_labels_to_one_oplot <- function(ggobject, prt_brks, xlabels){
   break_patterns = list(
     "Time (HH:MM:SS)"   = "^[[:digit:]]+:[[:digit:]]+:[[:digit:]]+$",

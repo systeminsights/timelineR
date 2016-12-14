@@ -16,8 +16,6 @@
 #' e.g: scale_valse=c(a=10), matching data will be multiplied by 10
 #' @param titles change titles of the plot
 #' e.g: title=c(ab="first plot",cd="second plot")
-#' @param xlabels change the labels on x-axis of plots
-#' e.g: xlabel=c(ab="time",cd="count")
 #' @param ylabels change the labels on y-axis of plots
 #' e.g: ylabel=c(ab="value",bcd="tmeperature")
 #' @param returnGG if TRUE, GGplot objects will be returned for further manual processing
@@ -33,7 +31,7 @@
 #' @return list of the filtered data will be returned invisibly 
 PlotDataItems <- function(timeline_df, data_grep="", start_time=NULL, end_time=NULL,
                           invert = F, ylimits=NULL, scale_vals=NULL, titles=NULL, 
-                          xlabels=NULL, ylabels=NULL, save_path = NULL, 
+                          ylabels=NULL, save_path = NULL, 
                           returnGG=FALSE, add_legend=TRUE, event_plot_size=0.6,
                           overlap_plots=NULL, color_palette_manual = NULL) {
   
@@ -74,9 +72,8 @@ PlotDataItems <- function(timeline_df, data_grep="", start_time=NULL, end_time=N
     add_titles_to_the_plot(titles) %>% 
     add_pretty_breaks_and_xlabel(xrange = time_limits)
 
-  # all_plots <- add_labels_to_the_plot(all_plots, plot_type, xlabels, ylabels)
-  
   ## Below function uses some intelligence to label X axis and also add x ticks with breaks
+  all_plots <- add_ylabels_to_the_plot(all_plots, ylabels, state_cols)
   
   # if(returnGG) return(all_plots)
   align_and_draw_the_plots(all_plots, numeric_cols, state_cols, event_plot_size, save_path)  
