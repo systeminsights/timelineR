@@ -5,8 +5,8 @@ generate_state_plot_layer <- function(data_to_plot) {
   names(data_to_plot)[2] = "value"
   
   ggplot() + geom_rect(data=data_to_plot[-nrow(data_to_plot),],
-            aes_string(xmin = "start_values", xmax = "end_values",
-                       ymin = 0L, ymax = 1L, fill = "value")) 
+                       aes(xmin = start_values, xmax = end_values,
+                       ymin = 0L, ymax = 1L, fill = value)) 
 }
 
 generate_numeric_plot_layer <- function(data_to_plot, current_ylimit, line_width=0.3) {
@@ -177,8 +177,6 @@ add_pretty_breaks_and_xlabel <- function(all_plots, xrange) {
 }
 
 
-
-
 # TODO : cleanup and pass the color mapping as an argument
 map_values_to_colors <- function(input, color_palette_manual = NULL) {
   
@@ -307,26 +305,4 @@ match_grep <- function(grep_vec, actual_names) {
   result_vec <- grep_vec[which_matches]
   names(result_vec) <- actual_names[one_match_check]
   result_vec
-}
-
-scale_data <- function(timeline_df_subset_range, scale_vals, numeric_cols){
-  if(is.null(scale_vals)) return(timeline_df_subset_range)
-  flog.info("Scaling few DIs from 'scale_vals'")
-  
-  grep_match_result <- match_grep(grep_vec = scale_vals, actual_names = names(timeline_df_subset_range[, numeric_cols]))
-  timeline_df_subset_range[names(grep_match_result)] = 
-    lapply(names(grep_match_result), function(x) grep_match_result[x] * timeline_df_subset_range[[x]])
-  timeline_df_subset_range
-}
-
-subset_data_into_time_range <- function(timeline_df_subset, start_time, end_time, ts_col){
-  
-  #finding start and end time limits, only when the limits are not already specified
-  time_range <- range(timeline_df_subset[[ts_col]])
-  if(!is.null(start_time)) time_range[1] <- start_time
-  if(!is.null(end_time))   time_range[2] <- end_time
-  
-  # function to subset data frame into time range
-  timeline_df_subset %>% filter(timeline_df_subset[[ts_col]] >= time_range[1], timeline_df_subset[[ts_col]] <= time_range[2])
-  
 }

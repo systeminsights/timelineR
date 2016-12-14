@@ -43,10 +43,7 @@ PlotDataItems <- function(timeline_df, data_grep="", start_time=NULL, end_time=N
   # The data.frame should have one timestamp columns, and one or more state and numeric columns
   # state columns SHOULD be factors or characters.
   # numeric columns should be numeric
-
-  # convert start and end into POSIXct objects
-  if(!is.null(start_time)) start_time <- toPOSIXct(start_time)
-  if(!is.null(end_time)) end_time <- toPOSIXct(end_time)
+  time_limits = get_time_limits(start_time, end_time)
   
   # grepping the required data items
   ts_col = names(timeline_df)[timeline_df %>% sapply(is.POSIXct)]
@@ -56,7 +53,7 @@ PlotDataItems <- function(timeline_df, data_grep="", start_time=NULL, end_time=N
   # function check for na and show warning and remove na
   # state_cols = names(timeline_df_subset)[timeline_df_subset %>% sapply(is.character)]
   
-  timeline_df_subset_range = subset_data_into_time_range(timeline_df_subset, start_time, end_time, ts_col)
+  timeline_df_subset_range = subset_data_into_time_range(timeline_df_subset, time_limits, ts_col)
   numeric_cols = names(timeline_df_subset_range)[timeline_df_subset_range %>% sapply(is.numeric)]
   timeline_cleaned = scale_data(timeline_df_subset_range, scale_vals, numeric_cols)
   
@@ -75,7 +72,7 @@ PlotDataItems <- function(timeline_df, data_grep="", start_time=NULL, end_time=N
   all_plots <- c(numeric_plots, state_plots) %>% 
     add_legend_to_plots(add_legend) %>% 
     add_titles_to_the_plot(titles) %>% 
-    add_pretty_breaks_and_xlabel(xrange = c(start_time, end_time))
+    add_pretty_breaks_and_xlabel(xrange = time_limits)
 
   # all_plots <- add_labels_to_the_plot(all_plots, plot_type, xlabels, ylabels)
   
