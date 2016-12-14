@@ -56,35 +56,33 @@ PlotDataItems <- function(timeline_df, data_grep="", start_time=NULL, end_time=N
   # function check for na and show warning and remove na
   # state_cols = names(timeline_df_subset)[timeline_df_subset %>% sapply(is.character)]
   
-  
   timeline_df_subset_range = subset_data_into_time_range(timeline_df_subset, start_time, end_time, ts_col)
   numeric_cols = names(timeline_df_subset_range)[timeline_df_subset_range %>% sapply(is.numeric)]
-  state_cols = names(timeline_cleaned)[timeline_cleaned %>% sapply(is.character)]
-  
   timeline_cleaned = scale_data(timeline_df_subset_range, scale_vals, numeric_cols)
+  
+  state_cols = names(timeline_cleaned)[timeline_cleaned %>% sapply(is.character)]
   actual_ylimits <- get_plot_limits(timeline_cleaned, numeric_cols, ylimits)
   
-  state_plots <- create_state_plots(timeline_cleaned, ts_col, state_cols) %>% 
-    add_legend_to_plots(add_legend) %>% 
+  state_plots <- timeline_cleaned %>% 
+    create_state_plots(ts_col, state_cols) %>% 
     add_colors_to_state_plots(color_palette_manual)
   
-  numeric_plots <- create_numeric_plots(timeline_cleaned, ts_col, numeric_cols, actual_ylimits) %>% 
-    add_legend_to_plots(add_legend)
+  numeric_plots <- create_numeric_plots(timeline_cleaned, ts_col, numeric_cols, actual_ylimits) 
   
   # combined_plot_list <- create_overlap_plots(overlap_plots, line_plots, event_plots)
   # combined_plot_list <- create_non_overlap_plots(numeric_plots, state_plots)
 
-  all_plots <- c(state_plots, numeric_plots)
+  all_plots <- c(numeric_plots, state_plots) %>% 
+    add_legend_to_plots(add_legend) %>% 
+    add_titles_to_the_plot(titles) %>% 
+    add_pretty_breaks_and_xlabel(xrange = c(start_time, end_time))
 
-  all_plots <- add_titles_to_the_plot(all_plots, titles)
   # all_plots <- add_labels_to_the_plot(all_plots, plot_type, xlabels, ylabels)
   
   ## Below function uses some intelligence to label X axis and also add x ticks with breaks
-  # all_plots <- sapply(X = all_plots,FUN = .AddExtrasToGGPlot,simplify = FALSE,USE.NAMES = TRUE,xrange=lims)
   
   # if(returnGG) return(all_plots)
-  
-  align_and_draw_the_plots(all_plots, plot_type, event_plot_size, save_path)  
+  align_and_draw_the_plots(all_plots, numeric_cols, state_cols, event_plot_size, save_path)  
   #return filtered data invisibly
   message("Plotting DONE!!!")
   return(invisible(data_list))

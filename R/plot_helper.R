@@ -134,12 +134,12 @@ align_and_draw_the_plots <- function(all_plots, numeric_cols, state_cols, event_
   message("Aligning plots")
   
   sizelist <- c(rep(1, times = length(numeric_cols)), rep(event_plot_size, times = length(state_cols)))
-  all_plots <- .rbind_ggplots(all_plots,ratio = sizelist)
+  all_plots <- rbind_ggplots(all_plots,ratio = sizelist)
   
   if(!is.null(savePath)) {
     message("Writing image to file as PNG in: ",  savePath)
     png(savePath, width = 1500, height = 800)
-    grid::grid.draw(combined_plot_list)
+    grid::grid.draw(all_plots)
     dev.off() 
   }
   
@@ -150,60 +150,30 @@ align_and_draw_the_plots <- function(all_plots, numeric_cols, state_cols, event_
   
 }
 
-
-.get_x_limits_from_ggplot <- function(ggobject) {
-  num_layers <- length(ggobject$layers)
-  if(!is.null(ggobject$coordinates$limits$x)) {
-    return(ggobject$coordinates$limits$x)
-  }
-  range_vec <- numeric(0)
-  for(i in seq_len(num_layers)) {
-    x_var <- as.character(ggobject$layers[[i]]$mapping$x)
-    if(length(x_var)>0) {
-      if(length(ggobject$layers[[1]]$data)==0) {
-        new_range <- range(ggobject$data[[x_var]])
-      } else {
-        new_range <- range(ggobject$layers[[i]]$data[[x_var]])
-      }
-    } else {
-      xmin_var <- as.character(ggobject$layers[[i]]$mapping$xmin)
-      xmax_var <- as.character(ggobject$layers[[i]]$mapping$xmax)
-      if(length(ggobject$layers[[1]]$data)==0) {
-        min_value <- min(ggobject$data[[xmin_var]])
-        max_value <- max(ggobject$data[[max_value]])
-      } else {
-        min_value <- min(ggobject$layers[[i]]$data[[xmin_var]])
-        max_value <- max(ggobject$layers[[i]]$data[[xmax_var]])
-      }
-      new_range <- c(min_value,max_value)
-    }
-    range_vec <- range(range_vec,new_range)
-  }
-  range_vec
+add_pretty_breaks_and_labels_to_one_oplot <- function(ggobject, prt_brks, xlabels){
+  break_patterns = list(
+    "Time (HH:MM:SS)"   = "^[[:digit:]]+:[[:digit:]]+:[[:digit:]]+$",
+    "Time (HH:MM)"      = "^[[:digit:]]+:[[:digit:]]+$",
+    "Time (s)"          = "^[[:digit:]]+$",
+    "Time (Date HH:MM)" = "^[[:alpha:]]+ [[:digit:]]+$",
+    "Time (Date)"       = "^[[:alpha:]]+ [[:digit:]]+$"
+  )
+  
+  which_pattern = which(sapply(break_patterns, function(x) str_detect(xlabels[2], x)))
+  if(length(which_pattern) == 0)  stop("Coudn't find break pattern!")
+  
+  xlabels[1] <- as.character(prt_brks[1])
+  ggobject + xlab(names(which_pattern)[1]) + scale_x_datetime(breaks = prt_brks, labels = xlabels)
 }
 
-.AddExtrasToGGPlot <- function(ggobject,xrange=NULL) {
-  if(is.null(xrange) || anyNA(xrange))
-    xrange <- toPOSIXct(.get_x_limits_from_ggplot(ggobject))
+add_pretty_breaks_and_xlabel <- function(all_plots, xrange) {
+  
   prt_brks <- base::pretty(n = 10,x = xrange)
   xlabels <- attr(prt_brks, "labels")
-  one_label <- xlabels[1]
-  xlabels[1] <- as.character(prt_brks[1])
-  if(str_detect(string=one_label,pattern="^[[:digit:]]+:[[:digit:]]+:[[:digit:]]+$")) {
-    lable <- paste("Time (HH:MM:SS)")
-  } else if(str_detect(string=one_label,pattern="^[[:digit:]]+:[[:digit:]]+$")) {
-    lable <- paste("Time (HH:MM)")
-  } else if(str_detect(string=one_label,pattern="^[[:digit:]]+$")) {
-    lable <- paste("Time (s)")
-  } else if(str_detect(string=one_label,pattern="^[[:alpha:]]+ [[:digit:]]+ [[:digit:]]+:[[:digit:]]+$")) {
-    lable <- paste("Time (Date HH:MM)")
-  } else if(str_detect(string=one_label,pattern="^[[:alpha:]]+ [[:digit:]]+$")) {
-    lable <- paste("Time (Date)")
-  } else {
-    stop("something wrong!")
-  }
-  ggobject <- ggobject + xlab(lable) + scale_x_datetime(breaks=prt_brks,labels=xlabels)
-  return(ggobject)
+
+  sapply(X = all_plots, FUN = add_pretty_breaks_and_labels_to_one_oplot,
+         prt_brks, xlabels, USE.NAMES = TRUE, simplify = F)
+  
 }
 
 
@@ -216,7 +186,7 @@ map_values_to_colors <- function(input, color_palette_manual = NULL) {
   if(!is.null(color_palette_manual))
     color_palette[1:length(color_palette_manual)] = color_palette_manual
   
-  color_mapping <- c(`Data-Unavailable` = "grey", `Non-Producing` = "pink", Producing = "green", `NA` = "white")
+  color_mapping <- c(`Data-Unavailabel` = "grey", `Non-Producing` = "pink", Producing = "green", `NA` = "white")
   
   uniq_values <- unique(input$value)
   mapped_colors <- color_palette[color_mapping[uniq_values]]
@@ -256,7 +226,7 @@ map_values_to_colors <- function(input, color_palette_manual = NULL) {
 #' plots two or more ggplots one below another
 #' @param gtl is a list of ggplot or gtable objects
 #' @param ratio if not null, is a numeric vector of the same length as gtl. Plots are resized to this ratio.
-.rbind_ggplots <- function(gtl, ratio=NULL){ 
+rbind_ggplots <- function(gtl, ratio=NULL){ 
   
   gtl <- lapply(gtl,function(x) {
     
