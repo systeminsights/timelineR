@@ -124,85 +124,42 @@ add_ylabels_to_the_plot <- function(all_plots, ylabels, state_cols){
   return(all_plots)
 }
 
-rbind_ggplots2 <- function(all_plots, ratio=NULL){
-
-  all_plots <- lapply(all_plots, ggplotGrob)
-  num_cols <- vapply(all_plots,FUN = ncol,FUN.VALUE = 0L)
-  if(length(unique(num_cols))!=1) stop("number of cols are not the same for all the ggplots!")
-
-  max_widths <- Reduce(f = grid::unit.pmax,x = lapply(all_plots,function(x) x$widths))
-  
-  # TODO : Use of cbind_ggplot
-  # multiplying the heights using the ratio
-  all_plots <- mapply(x=all_plots,y=ratio,FUN = function(x,y) {
-    which_panels <- str_detect(string = x$layout$name,pattern = "panel")
-    starts <- x$layout$t[which_panels]
-    ends <- x$layout$b[which_panels]
-    all_heights_req <- seq(from = starts,to = ends,by = 1L)
-    for(i in all_heights_req){
-      x$heights[i] =  x$heights[i] * y
-    }
-    browser()
-    x
-  })
-
-  all_grobs <- Reduce(f = append,x = lapply(all_plots,function(x) x$grobs))
-
-  all_heights <- Reduce(f = grid::unit.c,x = lapply(all_plots,function(x) x$heights))
-
-  all_rownames <- Reduce(f = c,x = lapply(all_plots,function(x) x$rownames))
-
-  num_rows <- unname(vapply(all_plots,FUN = nrow,FUN.VALUE = 0L))
-  num_rows <- c(0,num_rows[-length(num_rows)])
-  num_rows <- cumsum(num_rows)
-  all_plots <- mapply(x=all_plots,y=num_rows,function(x,y) {
-    x$layout$t <- x$layout$t + y
-    x$layout$b <- x$layout$b + y
-    x
-  })
-
-  all_layout <- Reduce(f = rbind,x = lapply(all_plots,function(x) x$layout))
-
-  final_plot <- all_plots[[1]]
-  final_plot$layout <- all_layout
-  final_plot$heights <- all_heights
-  final_plot$rownames <- all_rownames
-  final_plot$widths <- max_widths
-  final_plot$grobs <- all_grobs
-
-  final_plot
-}
-
-#' plots two or more ggplots one below another
-#' @param all_plots is a list of ggplot or gtable objects
-#' @param ratio if not null, is a numeric vector of the same length as all_plots. Plots are resized to this ratio.
-rbind_ggplots <- function(all_plots, sizelist){
-  all_plots_grob <- lapply(all_plots, ggplotGrob)
-
-  num_cols <- vapply(all_plots_grob, FUN = ncol, FUN.VALUE = 0L)
-  if(length(unique(num_cols))!=1) flog.stop("number of cols are not the same for all the ggplots!")
-
-  max_widths <- Reduce(f = grid::unit.pmax,x = lapply(all_plots_grob,function(x) x$widths))
-
-  all_plots_grob_scaled <- mapply(x = all_plots_grob, y = sizelist, FUN = function(x,y) {
+scale_grob_plots <- function(all_plots_grob, sizelist){
+  mapply(x = all_plots_grob, y = sizelist, FUN = function(x,y) {
     which_panel <- which(x$layout$name == "panel")
     x$heights[which_panel] =  x$heights[which_panel] * y
     x
   })
-  
-  # all_plots_grob_scaled = all_plots_grob
-  all_grobs <- Reduce(f = append,x = lapply(all_plots_grob_scaled,function(x) x$grobs))
-  all_heights <- Reduce(f = grid::unit.c,x = lapply(all_plots_grob_scaled,function(x) x$heights))
-  all_rownames <- Reduce(f = c,x = lapply(all_plots_grob_scaled,function(x) x$rownames))
+}
 
-  num_rows <- unname(vapply(all_plots_grob_scaled,FUN = nrow,FUN.VALUE = 0L))
+
+combine_the_grobs <- function(all_plots_grob_scaled){
+  num_rows <- unname(vapply(all_plots_grob_scaled, FUN = nrow, FUN.VALUE = 0L))
   num_rows <- c(0,num_rows[-length(num_rows)]) %>% cumsum
-
-  single_plot_scaled <- mapply(x = all_plots_grob_scaled, y = num_rows, function(x,y) {
+  
+  mapply(x = all_plots_grob_scaled, y = num_rows, function(x,y) {
     x$layout$t <- x$layout$t + y
     x$layout$b <- x$layout$b + y
     x
   })
+}
+
+
+#' plots two or more ggplots one below another
+#' @param all_plots is a list of ggplot or gtable objects
+#' @param ratio if not null, is a numeric vector of the same length as all_plots. Plots are resized to this ratio.
+rbind_grob_plots <- function(all_plots_grob_scaled){
+
+  num_cols <- vapply(all_plots_grob_scaled, FUN = ncol, FUN.VALUE = 0L)
+  if(length(unique(num_cols))!=1) flog.stop("number of cols are not the same for all the ggplots!")
+  
+  max_widths <- Reduce(f = grid::unit.pmax,x = lapply(all_plots_grob_scaled, function(x) x$widths))
+  
+  all_grobs <- Reduce(f = append,x = lapply(all_plots_grob_scaled,function(x) x$grobs))
+  all_heights <- Reduce(f = grid::unit.c,x = lapply(all_plots_grob_scaled,function(x) x$heights))
+  all_rownames <- Reduce(f = c,x = lapply(all_plots_grob_scaled,function(x) x$rownames))
+
+  single_plot_scaled <- combine_the_grobs(all_plots_grob_scaled)
 
   all_layout <- Reduce(f = rbind, x = lapply(single_plot_scaled,function(x) x$layout))
 
@@ -220,7 +177,10 @@ align_and_draw_the_plots <- function(all_plots, numeric_cols, state_cols, state_
   message("Aligning plots")
   
   sizelist <- c(rep(1, times = length(numeric_cols)), rep(state_plot_size, times = length(state_cols)))
-  all_plots_rbind <- rbind_ggplots(all_plots, sizelist)
+  all_plots_grob <- lapply(all_plots, ggplotGrob)
+  
+  all_plots_grob_scaled <- scale_grob_plots(all_plots_grob, sizelist)
+  all_plots_rbind <- rbind_grob_plots(all_plots_grob_scaled)
   
   if(!is.null(save_path)) {
     message("Writing image to file as PNG in: ",  save_path)
