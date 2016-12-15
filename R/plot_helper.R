@@ -241,29 +241,6 @@ add_pretty_breaks_and_xlabel <- function(all_plots, time_limits) {
 }
 
 
-# TODO : cleanup and pass the color mapping as an argument
-map_values_to_colors <- function(input, color_palette_manual = NULL) {
-  color_palette <- c(green = "#6fc376", pink = "#f6928f", grey = "#c1c1c1", white = "#ffffff")
-  if(!is.null(color_palette_manual))
-    color_palette[1:length(color_palette_manual)] = color_palette_manual
-  
-  color_mapping <- c(`Data-Unavailabel` = "grey", `Non-Producing` = "pink", Producing = "green", `NA` = "white")
-  
-  uniq_values <- unique(input$value)
-  mapped_colors <- color_palette[color_mapping[uniq_values]]
-  names(mapped_colors) <- uniq_values
-  which_nas <- is.na(mapped_colors)
-  num_nas <- sum(which_nas)
-  # Able to understand the result of below code but is'nt it too complex?
-  mapped_colors[which_nas] <-
-    c(
-      setdiff(color_palette,mapped_colors),
-      rep(unname(color_palette),times = ceiling(num_nas/length(color_palette)))
-    )[seq_len(num_nas)]
-  mapped_colors
-}
-
-
 .overlap_sample_plots <- function(list_of_plots) {
   all_names <- names(list_of_plots)
   for(i in seq_along(list_of_plots)) {
