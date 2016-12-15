@@ -71,13 +71,31 @@ add_legend_to_plots <- function(all_plots, add_legend){
   return(all_plots)
 }
 
+check_colors_mapping <- function(state_factors, user_defined_mapping){
+  if(length(names(user_defined_mapping)) == length(state_factors)){
+    if(length(setdiff(names(user_defined_mapping), state_factors)) == 0){
+      return(T)
+    }
+  }
+  return(F)
+}
 
-add_colors_to_state_plots <- function(all_plots, color_palette_manual){
-  all_plots <- lapply(all_plots, function(basic_plot) {
-    basic_plot <- basic_plot + scale_y_continuous(breaks=NULL)
-    color_mapping <- map_values_to_colors(basic_plot$layers[[1]]$data, color_palette_manual)
-    basic_plot <- basic_plot + scale_fill_manual(values=color_mapping)
+add_colors_to_state_plots <- function(all_plots, color_mapping, unique_state_factors){
+  names_all_plots <- names(all_plots)
+  all_plots <- lapply(1:length(all_plots), function(i) {
+    basic_plot <- all_plots[[i]]
+    basic_plot <- basic_plot + scale_y_continuous(breaks = NULL)
+    name_plot <- names_all_plots[[i]]
+    user_defined_mapping <- color_mapping[[name_plot]]
+    state_factors <- unique_state_factors[[name_plot]]
     
+    if(!is.null(user_defined_mapping)){
+      if(check_colors_mapping(state_factors, user_defined_mapping)){
+        basic_plot <- basic_plot + scale_fill_manual(values = user_defined_mapping)
+      }else{
+        flog.stop("Expected same number of colors as the number of factors")
+      }
+    }
     basic_plot  
   })
 }
@@ -225,7 +243,6 @@ add_pretty_breaks_and_xlabel <- function(all_plots, time_limits) {
 
 # TODO : cleanup and pass the color mapping as an argument
 map_values_to_colors <- function(input, color_palette_manual = NULL) {
-  
   color_palette <- c(green = "#6fc376", pink = "#f6928f", grey = "#c1c1c1", white = "#ffffff")
   if(!is.null(color_palette_manual))
     color_palette[1:length(color_palette_manual)] = color_palette_manual
@@ -238,7 +255,7 @@ map_values_to_colors <- function(input, color_palette_manual = NULL) {
   which_nas <- is.na(mapped_colors)
   num_nas <- sum(which_nas)
   # Able to understand the result of below code but is'nt it too complex?
-  mapped_colors[which_nas] <- 
+  mapped_colors[which_nas] <-
     c(
       setdiff(color_palette,mapped_colors),
       rep(unname(color_palette),times = ceiling(num_nas/length(color_palette)))

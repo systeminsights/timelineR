@@ -37,6 +37,8 @@ xlabels = c("mode" = "THE MODE", "exec" = "THE EX", "peed" = "PEED")
 ylabels = c("mode" = "THE MODE", "exec" = "THE EX", "peed" = "PEED")
 state_plot_size = .3
 
+color_mapping = list("jwpmfg_Grob_G550_cbeab7<Device>:mode<CONTROLLER_MODE>" = c("Unavailable" = "green", "AUTOMATIC" = "blue"))
+
 ggplot() + state_plots[[1]] + numeric_plots[[1]]
 
 # Things to verify

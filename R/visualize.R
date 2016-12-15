@@ -33,7 +33,7 @@ PlotDataItems <- function(timeline_df, data_grep="", start_time=NULL, end_time=N
                           invert = F, ylimits=NULL, scale_vals=NULL, titles=NULL, 
                           ylabels=NULL, save_path = NULL, 
                           returnGG=FALSE, add_legend=TRUE, event_plot_size=0.6,
-                          overlap_plots=NULL, color_palette_manual = NULL) {
+                          overlap_plots=NULL, color_mapping = list()) {
   
   # This function takes in a data.frame of format
   # |Timestamp|Event_A|Event_B|Sample_A|Sample_B|
@@ -58,9 +58,10 @@ PlotDataItems <- function(timeline_df, data_grep="", start_time=NULL, end_time=N
   state_cols = names(timeline_cleaned)[timeline_cleaned %>% sapply(is.character)]
   actual_ylimits <- get_plot_limits(timeline_cleaned, numeric_cols, ylimits)
   
+  unique_state_factors <- lapply(timeline_df_subset_range[state_cols], function(x) if(is.character(x)) unique(x))
   state_plots <- timeline_cleaned %>% 
     create_state_plots(ts_col, state_cols) %>% 
-    add_colors_to_state_plots(color_palette_manual)
+    add_colors_to_state_plots(color_mapping, unique_state_factors)
   
   numeric_plots <- create_numeric_plots(timeline_cleaned, ts_col, numeric_cols, actual_ylimits) 
   
