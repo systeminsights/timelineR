@@ -70,13 +70,13 @@ PlotDataItems <- function(timeline_df, data_grep="", start_time=NULL, end_time=N
   all_plots <- c(numeric_plots, state_plots) %>% 
     add_legend_to_plots(add_legend) %>% 
     add_titles_to_the_plot(titles) %>% 
-    add_pretty_breaks_and_xlabel(xrange = time_limits)
+    add_pretty_breaks_and_xlabel(time_limits)
 
   ## Below function uses some intelligence to label X axis and also add x ticks with breaks
   all_plots <- add_ylabels_to_the_plot(all_plots, ylabels, state_cols)
   
   # if(returnGG) return(all_plots)
-  align_and_draw_the_plots(all_plots, numeric_cols, state_cols, event_plot_size, save_path)  
+  align_and_draw_the_plots(all_plots, numeric_cols, state_cols, state_plot_size, save_path)  
   #return filtered data invisibly
   message("Plotting DONE!!!")
   return(invisible(data_list))

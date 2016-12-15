@@ -47,6 +47,6 @@ subset_data_into_time_range <- function(timeline_df_subset, time_limits, ts_col)
 get_time_limits <- function(start_time, end_time){
   if(!is.null(start_time)) start_time <- toPOSIXct(start_time)
   if(!is.null(end_time)) end_time <- toPOSIXct(end_time)
-  c(start_time = start_time, end_time, end_time)
+  list(start_time = start_time, end_time = end_time)
 }
 

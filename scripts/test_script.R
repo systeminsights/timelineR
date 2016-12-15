@@ -4,8 +4,11 @@ library(dplyr)
 library(lubridate)
 library(stringr)
 library(futile.logger)
+library(plotly)
 
 source("./R/visualize.R")
+
+context()
 
 test_device = readRDS("../res-common/case-studies/core/Rules_profile_analysis/shiny_app/jwpmfg_Grob_G550_cbeab7")
 test_device_df = mtconnectR::merge(test_device) # %>% na.omit()
@@ -32,9 +35,15 @@ ylimits = list("SPEED-ACTUAL" = c(100, 1800))
 titles = c("mode" = "THE MODE", "exec" = "THE EX", "peed" = "PEED")
 xlabels = c("mode" = "THE MODE", "exec" = "THE EX", "peed" = "PEED")
 ylabels = c("mode" = "THE MODE", "exec" = "THE EX", "peed" = "PEED")
-event_plot_size = 3
+state_plot_size = .3
 
 ggplot() + state_plots[[1]] + numeric_plots[[1]]
 
+# Things to verify
+# Test that the label has come correctly
+# Test that the x
+
+expect_true(TRUE)
 
 
+plotly::ggplotly(state_plots[[1]])
