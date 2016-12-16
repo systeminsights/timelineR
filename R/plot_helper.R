@@ -98,6 +98,8 @@ add_colors_to_state_plots <- function(all_plots, color_mapping, unique_state_fac
     }
     basic_plot  
   })
+  names(all_plots) <- names_all_plots
+  return(all_plots)
 }
 
 get_plot_limits <- function(timeline_cleaned, numeric_plots, ylimits){
