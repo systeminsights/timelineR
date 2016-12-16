@@ -1,5 +1,6 @@
 library(vimana)
 library(ggplot2)
+library(gtable)
 library(dplyr)
 library(lubridate)
 library(stringr)

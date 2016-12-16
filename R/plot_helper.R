@@ -261,6 +261,23 @@ add_pretty_breaks_and_xlabel <- function(all_plots, time_limits) {
   plot_obj
 }
 
+
+create_overlapping_plots <- function(state_plot, numeric_plot){
+  state_plot <- state_plot + theme(panel.grid.minor = element_blank())
+  
+  numeric_plot <- numeric_plot + theme(panel.grid.minor = element_blank(), 
+                                       panel.background = element_rect(fill = "transparent", colour = NA), 
+                                       plot.background = element_rect(fill = "transparent", colour = NA))
+  
+  state_grob_table <- ggplot_build(state_plot) %>% ggplot_gtable()
+  numeric_grob_table <- ggplot_build(numeric_plot) %>% ggplot_gtable()
+  
+  numeric_pos <- subset(numeric_grob_table$layout, name == "panel", select = t:r)
+  numeric_panel_grob <- numeric_grob_table$grobs[[which(numeric_grob_table$layout$name == "panel")]]
+  combined_grob <- gtable_add_grob(state_grob_table, numeric_panel_grob, 
+                                   numeric_pos$t, numeric_pos$l, numeric_pos$b, numeric_pos$r)
+}
+
 give_match_status <- function(grep_result, actual_names){
   no_matches = rowSums(grep_result) < 1
   if(sum(no_matches))
