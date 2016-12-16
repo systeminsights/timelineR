@@ -108,9 +108,7 @@ get_plot_limits <- function(timeline_cleaned, numeric_plots, ylimits){
   default_ylimits <- rep(list(NULL), length(numeric_plots))
   names(default_ylimits) <- numeric_cols
   
-  grep_match_result <- match_grep(grep_vec = ylimits, actual_names = numeric_cols)
-  
-  default_ylimits[names(grep_match_result)] = grep_match_result
+  default_ylimits[names(ylimits)] = ylimits
   default_ylimits[numeric_cols]
 }
 
@@ -135,8 +133,7 @@ add_ylabels_to_the_plot <- function(all_plots, ylabels, state_cols){
   names(default_ylabs) <- names(all_plots)
   if(!is.null(ylabels)) {
     flog.info("Adding new y-labels")
-    grep_match_result <- match_grep(grep_vec = ylabels, actual_names = names(all_plots))
-    default_ylabs[names(grep_match_result)] <- grep_match_result
+    default_ylabs[names(ylabels)] <- ylabels
   }
   default_ylabs <- default_ylabs[names(all_plots)]
   all_plots <- mapply(FUN = function(x,y) x + ylab(y), x = all_plots, y = default_ylabs, SIMPLIFY = FALSE, USE.NAMES = TRUE)
