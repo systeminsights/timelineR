@@ -120,9 +120,8 @@ add_titles_to_the_plot <- function(all_plots, titles){
   names(default_titles) <- names(all_plots)
   
   if(!is.null(titles)) {
-    message("Adding new plot titles")
-    grep_match_result <- match_grep(grep_vec = titles,actual_names = names(all_plots))
-    default_titles[names(grep_match_result)] <- grep_match_result
+    flog.info("Adding new plot titles")
+    default_titles[names(titles)] <- titles
   }
   all_plots <- mapply(FUN = function(x,y) x + ggtitle(y), x=all_plots, y=default_titles, SIMPLIFY = FALSE,USE.NAMES = TRUE)
   return(all_plots)

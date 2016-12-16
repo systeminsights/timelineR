@@ -13,6 +13,7 @@ context()
 
 test_device = readRDS("../res-common/case-studies/core/Rules_profile_analysis/shiny_app/jwpmfg_Grob_G550_cbeab7")
 test_device_df = mtconnectR::merge(test_device) # %>% na.omit()
+names(test_device_df)= c("timestamp", "s_ovr", "s_speed", "s_speed_com", "execution", "controller_mode")
 str(test_device_df)
 range(test_device_df$timestamp)
 
@@ -33,12 +34,12 @@ add_legend = T
 
 grep_vec = scale_vals = c("SPEED-ACTUAL" = 1e-4, "SPEED-COMMANDED" = 1e2)
 ylimits = list("SPEED-ACTUAL" = c(100, 1800))
-titles = c("mode" = "THE MODE", "exec" = "THE EX", "peed" = "PEED")
+titles = c("controller_mode" = "THE MODE", "execution" = "THE EX", "s_speed" = "PEED")
 xlabels = c("mode" = "THE MODE", "exec" = "THE EX", "peed" = "PEED")
 ylabels = c("mode" = "THE MODE", "exec" = "THE EX", "peed" = "PEED")
 state_plot_size = .3
 
-color_mapping = list("jwpmfg_Grob_G550_cbeab7<Device>:mode<CONTROLLER_MODE>" = c("Unavailable" = "green", "AUTOMATIC" = "blue"))
+color_mapping = list("controller_mode" = c("Unavailable" = "green", "AUTOMATIC" = "blue"))
 
 ggplot() + state_plots[[1]] + numeric_plots[[1]]
 
