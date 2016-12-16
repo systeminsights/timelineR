@@ -262,20 +262,33 @@ add_pretty_breaks_and_xlabel <- function(all_plots, time_limits) {
 }
 
 
+add_grob_to_pos <- function(input_grob, add_grob_table, layout_name){
+  add_pos <- subset(add_grob_table$layout, name == layout_name, select = t:r)
+  add_grob <- add_grob_table$grobs[[which(add_grob_table$layout$name == layout_name)]]
+  combined_grob <- gtable_add_grob(input_grob, add_grob, 
+                                   add_pos$t, add_pos$l, add_pos$b, add_pos$r)
+  return(combined_grob)
+}
+
+
 create_overlapping_plots <- function(state_plot, numeric_plot){
-  state_plot <- state_plot + theme(panel.grid.minor = element_blank())
+  state_plot <- state_plot + theme(panel.grid.minor = element_blank(),
+                                   panel.grid.major = element_blank()) + ylab("")
   
-  numeric_plot <- numeric_plot + theme(panel.grid.minor = element_blank(), 
+  numeric_plot <- numeric_plot + theme(panel.grid.minor = element_blank(),
+                                       panel.grid.major = element_blank(),
                                        panel.background = element_rect(fill = "transparent", colour = NA), 
                                        plot.background = element_rect(fill = "transparent", colour = NA))
   
   state_grob_table <- ggplot_build(state_plot) %>% ggplot_gtable()
   numeric_grob_table <- ggplot_build(numeric_plot) %>% ggplot_gtable()
   
-  numeric_pos <- subset(numeric_grob_table$layout, name == "panel", select = t:r)
-  numeric_panel_grob <- numeric_grob_table$grobs[[which(numeric_grob_table$layout$name == "panel")]]
-  combined_grob <- gtable_add_grob(state_grob_table, numeric_panel_grob, 
-                                   numeric_pos$t, numeric_pos$l, numeric_pos$b, numeric_pos$r)
+  combined_grob <- add_grob_to_pos(state_grob_table, numeric_grob_table, "panel")
+  combined_grob <- add_grob_to_pos(combined_grob, numeric_grob_table, "ylab-l")
+  combined_grob <- add_grob_to_pos(combined_grob, numeric_grob_table, "axis-l")
+  
+  combined_grob$widths[3] = numeric_grob_table$widths[3]
+  return(combined_grob)
 }
 
 give_match_status <- function(grep_result, actual_names){
