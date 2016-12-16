@@ -241,27 +241,6 @@ add_pretty_breaks_and_xlabel <- function(all_plots, time_limits) {
 }
 
 
-.overlap_sample_plots <- function(list_of_plots) {
-  all_names <- names(list_of_plots)
-  for(i in seq_along(list_of_plots)) {
-    list_of_plots[[i]]$mapping$colour <- suppressWarnings(ExtractParamfromPath(all_names[i]))
-  }
-  Reduce(f = `+`,x = list_of_plots,init = ggplot()) 
-}
-
-.overlap_event_plots <- function(list_of_plots) {
-  plot_obj <- ggplot()
-  count <- 0L
-  for(single_layer in list_of_plots) {
-    single_layer$mapping$ymin <- count
-    count <- count + 1L
-    single_layer$mapping$ymax <- count
-    plot_obj <- plot_obj + single_layer
-  }
-  plot_obj
-}
-
-
 add_grob_to_pos <- function(input_grob, add_grob_table, layout_name){
   add_pos <- subset(add_grob_table$layout, name == layout_name, select = t:r)
   add_grob <- add_grob_table$grobs[[which(add_grob_table$layout$name == layout_name)]]
