@@ -103,7 +103,7 @@ add_colors_to_state_plots <- function(all_plots, color_mapping, unique_state_fac
 }
 
 get_plot_limits <- function(timeline_cleaned, numeric_plots, ylimits){
-  numeric_cols = names(timeline_df_subset_range)[timeline_df_subset_range %>% sapply(is.numeric)]
+  numeric_cols = names(timeline_cleaned)[timeline_cleaned %>% sapply(is.numeric)]
   
   default_ylimits <- rep(list(NULL), length(numeric_plots))
   names(default_ylimits) <- numeric_cols
@@ -189,12 +189,21 @@ rbind_grob_plots <- function(all_plots_grob_scaled){
   final_plot
 }
 
+adjust_legend_position <- function(all_plots_grob){
+  mapply(x = all_plots_grob, FUN = function(x) {
+    which_panel <- which(x$layout$name == "guide-box")
+    x$layout[which_panel, c('t', 'b')] =  x$layout[which_panel, c('t', 'b')] + 1
+    x
+  })
+}
+
 align_and_draw_the_plots <- function(all_plots, numeric_cols, state_cols, state_plot_size, save_path){
   message("Aligning plots")
   
   sizelist <- c(rep(1, times = length(numeric_cols)), rep(state_plot_size, times = length(state_cols)))
   all_plots_grob <- lapply(all_plots, ggplotGrob)
   
+  all_plots_grob = adjust_legend_position(all_plots_grob)
   all_plots_grob_scaled <- scale_grob_plots(all_plots_grob, sizelist)
   all_plots_rbind <- rbind_grob_plots(all_plots_grob_scaled)
   
@@ -209,7 +218,7 @@ align_and_draw_the_plots <- function(all_plots, numeric_cols, state_cols, state_
     message("Plotting")
     grid::grid.draw(all_plots_rbind)
   }
-  
+  all_plots_rbind
 }
 
 #' If need arises to add xlabel, they can be added as prefix by passing to this function
@@ -266,30 +275,4 @@ create_overlapping_plots <- function(state_plot, numeric_plot){
   
   combined_grob$widths[3] = numeric_grob_table$widths[3]
   return(combined_grob)
-}
-
-give_match_status <- function(grep_result, actual_names){
-  no_matches = rowSums(grep_result) < 1
-  if(sum(no_matches))
-    flog.info(sprintf("No matches found for scaling %s", paste(actual_names[no_matches], collapse = ", ")))
-  
-  multiple_matches = rowSums(grep_result) > 1
-  if(sum(multiple_matches))
-    flog.info(sprintf("Multiple matches found for scaling %s", paste(actual_names[multiple_matches], collapse = ", ")))
-  
-  rowSums(grep_result) == 1
-}
-
-match_grep <- function(grep_vec, actual_names) {
-  
-  grep_result <- vapply(X = names(grep_vec), FUN = stringr::str_detect, string=actual_names,
-                        USE.NAMES = FALSE, FUN.VALUE = logical(length(actual_names)))
-  if(is.vector(grep_result)) grep_result <- matrix(grep_result,nrow = length(actual_names))
-  
-  one_match_check = give_match_status(grep_result, actual_names)
-  
-  which_matches <- apply(X = grep_result[one_match_check, ,drop=FALSE], MARGIN = 1, FUN = which)
-  result_vec <- grep_vec[which_matches]
-  names(result_vec) <- actual_names[one_match_check]
-  result_vec
 }

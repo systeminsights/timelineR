@@ -29,10 +29,10 @@
 #' e.g.: overlap_plots="(abc,pqr),(pqr),(xyz,123,345)", 
 #' overlap_plots = "(S1speed),(path_feedrate1),(executi,CONTROLLER_MODE)"
 #' @return list of the filtered data will be returned invisibly 
-PlotDataItems <- function(timeline_df, data_grep="", start_time=NULL, end_time=NULL,
-                          invert = F, ylimits=NULL, scale_vals=NULL, titles=NULL, 
+plot_timeline <- function(timeline_df, data_cols = NULL, start_time=NULL, end_time=NULL,
+                          ylimits=NULL, scale_vals=NULL, titles=NULL, 
                           ylabels=NULL, save_path = NULL, 
-                          returnGG=FALSE, add_legend=TRUE, event_plot_size=0.6,
+                          add_legend=TRUE, state_plot_size=0.6,
                           overlap_plots=NULL, color_mapping = list()) {
   
   # This function takes in a data.frame of format
@@ -41,17 +41,21 @@ PlotDataItems <- function(timeline_df, data_grep="", start_time=NULL, end_time=N
   # The data.frame should have one timestamp columns, and one or more state and numeric columns
   # state columns SHOULD be factors or characters.
   # numeric columns should be numeric
+  
+  if(!is.null(data_cols)) data_cols = names(timeline_df)
+  check_input_arguments(timeline_df, data_cols, ylimits, scale_vals, titles, ylabels, overlap_plots)
+  
   time_limits = get_time_limits(start_time, end_time)
-  
-  # grepping the required data items
   ts_col = names(timeline_df)[timeline_df %>% sapply(is.POSIXct)]
-  which_grep <- names(timeline_df)[grep(data_grep, names(timeline_df), invert=invert)]
-  timeline_df_subset <- timeline_df[union(ts_col, which_grep)]
-  
-  # function check for na and show warning and remove na
-  # state_cols = names(timeline_df_subset)[timeline_df_subset %>% sapply(is.character)]
+  timeline_df_subset = timeline_df[ , union(ts_col, data_cols)]
   
   timeline_df_subset_range = subset_data_into_time_range(timeline_df_subset, time_limits, ts_col)
+  
+  # remove_nas <- function(timeline_df_subset_range){
+  #   timeline_df_subset_range = timeline_df_subset_range %>% na.omit()
+  # }
+  # 
+  
   numeric_cols = names(timeline_df_subset_range)[timeline_df_subset_range %>% sapply(is.numeric)]
   timeline_cleaned = scale_data(timeline_df_subset_range, scale_vals, numeric_cols)
   
@@ -64,7 +68,6 @@ PlotDataItems <- function(timeline_df, data_grep="", start_time=NULL, end_time=N
     add_colors_to_state_plots(color_mapping, unique_state_factors)
   
   numeric_plots <- create_numeric_plots(timeline_cleaned, ts_col, numeric_cols, actual_ylimits) 
-  
   # combined_plot_list <- create_overlap_plots(overlap_plots, line_plots, event_plots)
   # combined_plot_list <- create_non_overlap_plots(numeric_plots, state_plots)
 
@@ -77,8 +80,6 @@ PlotDataItems <- function(timeline_df, data_grep="", start_time=NULL, end_time=N
   all_plots <- add_ylabels_to_the_plot(all_plots, ylabels, state_cols)
   
   # if(returnGG) return(all_plots)
-  align_and_draw_the_plots(all_plots, numeric_cols, state_cols, state_plot_size, save_path)  
-  #return filtered data invisibly
-  message("Plotting DONE!!!")
-  return(invisible(data_list))
+  grob_output = align_and_draw_the_plots(all_plots, numeric_cols, state_cols, state_plot_size, save_path)  
+  return(grob_output)
 }

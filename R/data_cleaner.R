@@ -1,4 +1,33 @@
 
+give_match_status <- function(grep_result, actual_names, echo = F){
+  no_matches = rowSums(grep_result) < 1
+  if(echo && sum(no_matches))
+    flog.info(sprintf("No matches found for scaling %s", paste(actual_names[no_matches], collapse = ", ")))
+  
+  multiple_matches = rowSums(grep_result) > 1
+  if(echo && sum(multiple_matches))
+    flog.info(sprintf("Multiple matches found for scaling %s", paste(actual_names[multiple_matches], collapse = ", ")))
+  
+  rowSums(grep_result) == 1
+}
+
+match_grep <- function(grep_vec, actual_names, use_values = F, return_names = F, echo = F) {
+  
+  if(use_values) names(grep_vec) = grep_vec
+  grep_result <- vapply(X = names(grep_vec), FUN = stringr::str_detect, string=actual_names,
+                        USE.NAMES = FALSE, FUN.VALUE = logical(length(actual_names)))
+  if(is.vector(grep_result)) grep_result <- matrix(grep_result,nrow = length(actual_names))
+  
+  one_match_check = give_match_status(grep_result, actual_names, echo = echo)
+  
+  which_matches <- apply(X = grep_result[one_match_check, ,drop=FALSE], MARGIN = 1, FUN = which)
+  result_vec <- grep_vec[which_matches]
+  names(result_vec) <- actual_names[one_match_check]
+  if(return_names) return(names(result_vec))
+  result_vec
+}
+
+
 get_new_names <- function(input_statement, nam_in, len_in){
   new_nams <- str_trim(str_split_fixed(str_replace_all(str_trim(input_statement),
                                                        "^list\\(|\\)$",""),pattern = ",",
@@ -23,11 +52,10 @@ delete_empty_data_items <- function(data_list, SorE){
 
 scale_data <- function(timeline_df_subset_range, scale_vals, numeric_cols){
   if(is.null(scale_vals)) return(timeline_df_subset_range)
-  flog.info("Scaling few DIs from 'scale_vals'")
+  flog.info("Scaling data accoding to 'scale_vals'")
   
-  grep_match_result <- match_grep(grep_vec = scale_vals, actual_names = names(timeline_df_subset_range[, numeric_cols]))
-  timeline_df_subset_range[names(grep_match_result)] = 
-    lapply(names(grep_match_result), function(x) grep_match_result[x] * timeline_df_subset_range[[x]])
+  timeline_df_subset_range[names(scale_vals)] = 
+    lapply(names(scale_vals), function(x) scale_vals[x] * timeline_df_subset_range[[x]])
   timeline_df_subset_range
 }
 
@@ -50,3 +78,13 @@ get_time_limits <- function(start_time, end_time){
   list(start_time = start_time, end_time = end_time)
 }
 
+check_input_arguments <- function(timeline_df, data_cols, ylimits, scale_vals,
+                                  titles, ylabels, overlap_plots){
+  if(!all(data_cols %in% names(timeline_df))) flog.stop("All Data columns not in timeline_df!")
+  if(!all(names(ylimits) %in% names(timeline_df))) flog.stop("All Ylimit names not in timeline_df!")
+  if(!all(names(scale_vals) %in% names(timeline_df))) flog.stop("All scale_vals names not in timeline_df!")
+  if(!all(names(titles) %in% names(timeline_df))) flog.stop("All titles names not in timeline_df!")
+  if(!all(names(ylabels) %in% names(timeline_df))) flog.stop("All ylabels names not in timeline_df!")
+  if(!all(names(overlap_plots) %in% names(timeline_df))) flog.stop("All overlap_plots names not in timeline_df!")
+  return(TRUE)
+}
