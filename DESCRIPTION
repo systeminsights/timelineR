@@ -10,8 +10,10 @@ Imports:
     lubridate,
     stringr,
     futile.logger,
-    ggplot2
-License: What license is it under?
+    ggplot2,
+    gtable,
+    grid
+License:  AGPL-3
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 5.0.1

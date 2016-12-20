@@ -1,7 +1,8 @@
-#' @importFrom dplyr %>% filter
+#' @importFrom dplyr %>% filter mutate_if
 #' @importFrom lubridate is.POSIXct
 #' @importFrom futile.logger flog.info
-#' @importFrom stringr str_detect
+#' @importFrom stringr str_detect str_replace_all str_split_fixed str_trim
+#' @importFrom grDevices dev.off png
 #' @import ggplot2
 #' @import gtable
 
@@ -51,7 +52,7 @@ plot_timeline <- function(timeline_df, data_cols = NULL, start_time=NULL, end_ti
   if(is.null(data_cols)) data_cols = names(timeline_df)
   check_input_arguments(timeline_df, data_cols, ylimits, scale_vals, titles,
                         ylabels, overlap_plots_names, plot_size_ratios)
-  
+  timeline_df %>% mutate_if(is.factor, as.character) -> timeline_df  
   col_type = get_col_types(timeline_df)
   
   time_limits = get_time_limits(start_time, end_time)

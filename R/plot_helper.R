@@ -3,6 +3,7 @@ generate_state_plot_layer <- function(data_to_plot) {
   start_values = data_to_plot[1:(nrow(data_to_plot) - 1), 1]
   end_values = data_to_plot[2:nrow(data_to_plot), 1]
   names(data_to_plot)[2] = "value"
+  value = NULL # cran check 
   
   ggplot() + geom_rect(data=data_to_plot[-nrow(data_to_plot),],
                        aes(xmin = start_values, xmax = end_values,
@@ -37,16 +38,6 @@ create_numeric_plots <- function(timeline_cleaned, ts_col, numeric_cols, actual_
                           SIMPLIFY = F, USE.NAMES = T)
   
   return(numeric_plots)
-}
-
-
-create_non_overlap_plots <- function(numeric_plots, state_plots){
-  all_plots <- lapply(X = c(numeric_plots, state_plots),FUN = function(x) {
-    ggplot() + x
-  })
-  plot_type <- c(rep("Numeric", length(numeric_plots)),rep("State", length(state_plots)))
-  names(plot_type) <- names(all_plots)
-  return(list(all_plots = all_plots, plot_type = plot_type))
 }
 
 #  We now have all_plots which is a list of ggplots with automatic legend scales
@@ -93,7 +84,7 @@ add_colors_to_state_plots <- function(all_plots, color_mapping, unique_state_fac
       if(check_colors_mapping(state_factors, user_defined_mapping)){
         basic_plot <- basic_plot + scale_fill_manual(values = user_defined_mapping)
       }else{
-        flog.stop("Expected same number of colors as the number of factors")
+        stop("Expected same number of colors as the number of factors")
       }
     }
     basic_plot  
@@ -168,14 +159,10 @@ combine_the_grobs <- function(all_plots_grob_scaled){
   })
 }
 
-
-#' plots two or more ggplots one below another
-#' @param all_plots is a list of ggplot or gtable objects
-#' @param ratio if not null, is a numeric vector of the same length as all_plots. Plots are resized to this ratio.
 rbind_grob_plots <- function(all_plots_grob_scaled){
 
   num_cols <- vapply(all_plots_grob_scaled, FUN = ncol, FUN.VALUE = 0L)
-  if(length(unique(num_cols))!=1) flog.stop("number of cols are not the same for all the ggplots!")
+  if(length(unique(num_cols))!=1) stop("number of cols are not the same for all the ggplots!")
   
   max_widths <- Reduce(f = grid::unit.pmax,x = lapply(all_plots_grob_scaled, function(x) x$widths))
   
@@ -242,7 +229,8 @@ draw_the_plots <- function(grob_output, save_path, plot_output = T){
     grid::grid.draw(grob_output)
   }
 }
-#' If need arises to add xlabel, they can be added as prefix by passing to this function
+
+# If need arises to add xlabel, they can be added as prefix by passing to this function
 add_pretty_breaks_and_labels_to_one_oplot <- function(ggobject, prt_brks, xlabels){
   break_patterns = list(
     "Time (HH:MM:SS)"   = "^[[:digit:]]+:[[:digit:]]+:[[:digit:]]+$",
@@ -269,7 +257,7 @@ add_pretty_breaks_and_xlabel <- function(all_plots, time_limits) {
 
 
 add_grob_to_pos <- function(input_grob, add_grob_table, layout_name){
-  add_pos <- subset(add_grob_table$layout, name == layout_name, select = t:r)
+  add_pos <- subset(add_grob_table$layout, add_grob_table$layout$name == layout_name)[, c("t", "l", "b", "r")]
   add_grob <- add_grob_table$grobs[[which(add_grob_table$layout$name == layout_name)]]
   combined_grob <- gtable_add_grob(input_grob, add_grob, 
                                    add_pos$t, add_pos$l, add_pos$b, add_pos$r)
@@ -283,7 +271,7 @@ check_overlap_plottability <- function(overlap_plots, state_cols, numeric_cols){
 
 create_all_overlapping_plots <- function(all_plots, state_cols, numeric_cols, overlap_plots, titles){
   if(!check_overlap_plottability(overlap_plots, state_cols, numeric_cols)) 
-    flog.stop("Incorrect combination of state and numeric plots")
+    stop("Incorrect combination of state and numeric plots")
   
   sapply(names(overlap_plots), function(name_plot) {
       x = overlap_plots[[name_plot]]

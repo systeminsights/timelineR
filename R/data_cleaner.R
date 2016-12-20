@@ -27,29 +27,6 @@ match_grep <- function(grep_vec, actual_names, use_values = F, return_names = F,
   result_vec
 }
 
-
-get_new_names <- function(input_statement, nam_in, len_in){
-  new_nams <- str_trim(str_split_fixed(str_replace_all(str_trim(input_statement),
-                                                       "^list\\(|\\)$",""),pattern = ",",
-                                       n = len_in)[1,])
-  if(is.null(nam_in)) nam_in <- rep("",times = len_in)
-  which_check <- nam_in %in% ""
-  nam_in[which_check] <- new_nams[which_check]
-  return(nam_in)
-}
-
-delete_empty_data_items <- function(data_list, SorE){
-  #removing empty data items
-  zero_row_items <- vapply(X=data_list,FUN=function(x) return((nrow(x)==0)||is.null(x)),FUN.VALUE=FALSE,USE.NAMES=FALSE)
-  if(any(zero_row_items)) {
-    message(paste0(names(data_list)[zero_row_items],collapse=", ")," are either NULL or have zero rows. Excluding these DIs.")
-    data_list[zero_row_items] <- NULL
-    SorE <- SorE[!zero_row_items]
-  }
-  return(list(data_list = data_list, SorE = SorE))
-}
-
-
 scale_data <- function(timeline_df_subset_range, scale_vals, numeric_cols){
   if(is.null(scale_vals)) return(timeline_df_subset_range)
   flog.info("Scaling data accoding to 'scale_vals'")
@@ -84,8 +61,8 @@ get_col_types <- function(timeline_df) {
   numeric_cols = names(timeline_df)[timeline_df %>% sapply(is.numeric)]
   state_cols = names(timeline_df)[timeline_df %>% sapply(is.character)]
   
-  if(length(ts_col) == 0) flog.stop("No POSIXct columns detected to assign the timestamp!")
-  if(length(ts_col) > 1) flog.stop("Multiple POSIXct columns detected. Timeline DF should have only on timestamp!")
+  if(length(ts_col) == 0) stop("No POSIXct columns detected to assign the timestamp!")
+  if(length(ts_col) > 1) stop("Multiple POSIXct columns detected. Timeline DF should have only on timestamp!")
   
   flog.info(sprintf("%s has been selected as the timestamp column", ts_col))
   flog.info(sprintf("%s has been selected as the numeric column(s)", paste(numeric_cols, collapse = ", ")))
@@ -96,14 +73,14 @@ get_col_types <- function(timeline_df) {
 check_input_arguments <- function(timeline_df, data_cols, ylimits, scale_vals,
                                   titles, ylabels, overlap_plots, plot_size_ratios){
   
-  if(!all(data_cols %in% names(timeline_df))) flog.stop("All Data columns not in timeline_df!")
-  if(!all(names(ylimits) %in% names(timeline_df))) flog.stop("All Ylimit names not in timeline_df!")
-  if(!all(names(scale_vals) %in% names(timeline_df))) flog.stop("All scale_vals names not in timeline_df!")
-  if(!all(names(titles) %in% c(names(timeline_df),names(overlap_plots)))) flog.stop("All titles names not in timeline_df!")
-  if(!all(names(ylabels) %in% names(timeline_df))) flog.stop("All ylabels names not in timeline_df!")
+  if(!all(data_cols %in% names(timeline_df))) stop("All Data columns not in timeline_df!")
+  if(!all(names(ylimits) %in% names(timeline_df))) stop("All Ylimit names not in timeline_df!")
+  if(!all(names(scale_vals) %in% names(timeline_df))) stop("All scale_vals names not in timeline_df!")
+  if(!all(names(titles) %in% c(names(timeline_df),names(overlap_plots)))) stop("All titles names not in timeline_df!")
+  if(!all(names(ylabels) %in% names(timeline_df))) stop("All ylabels names not in timeline_df!")
   if(!all(names(overlap_plots) %in% c(names(timeline_df), names(overlap_plots)))) 
-    flog.stop("All overlap_plots names not in timeline_df!")
+    stop("All overlap_plots names not in timeline_df!")
   if(!all(names(plot_size_ratios) %in% c(names(timeline_df), names(overlap_plots))))
-    flog.stop("All plot_size_ratios names not in timeline_df!")
+    stop("All plot_size_ratios names not in timeline_df!")
   return(TRUE)
 }

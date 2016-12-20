@@ -1,4 +1,5 @@
 library(testthat)
+library(timelineR)
 
 start_timestamp = as.POSIXct("2017-01-01 00:00:00") 
 offsets = c(10, 30, 21, 7, 10, 32)
@@ -28,27 +29,27 @@ test_that("Different Time ranges", {
   test_data$start_time = start_timestamp + cumsum(sample(1:10, 6, replace = T))
   plot_timeline(test_data)
   # times in seconds
-
-  test_data$start_time = start_timestamp + cumsum(sample(1:100, 6, replace = T))
-  plot_timeline(test_data)
-  # times in hours, minutes, seconds
-
-  test_data$start_time = start_timestamp + cumsum(sample(1:1000, 6, replace = T))
-  plot_timeline(test_data)
-  # times in hours, minutes
-
-  test_data$start_time = start_timestamp + cumsum(sample(1:1e4, 6, replace = T))
-  plot_timeline(test_data)
-  # times in hours, minutes
-
-  test_data$start_time = start_timestamp + cumsum(sample(1:1e5, 6, replace = T))
-  plot_timeline(test_data)
-  # times in date hours, minutes
-
-  test_data$start_time = start_timestamp + cumsum(sample(1:1e6, 6, replace = T))
-  plot_timeline(test_data)
+  # 
+  #   test_data$start_time = start_timestamp + cumsum(sample(1:100, 6, replace = T))
+  #   plot_timeline(test_data)
+  #   # times in hours, minutes, seconds
+  # 
+  #   test_data$start_time = start_timestamp + cumsum(sample(1:1000, 6, replace = T))
+  #   plot_timeline(test_data)
+  #   # times in hours, minutes
+  # 
+  #   test_data$start_time = start_timestamp + cumsum(sample(1:1e4, 6, replace = T))
+  #   plot_timeline(test_data)
+  #   # times in hours, minutes
+  # 
+  #   test_data$start_time = start_timestamp + cumsum(sample(1:1e5, 6, replace = T))
+  #   plot_timeline(test_data)
+  #   # times in date hours, minutes
+  # 
+  #   test_data$start_time = start_timestamp + cumsum(sample(1:1e6, 6, replace = T))
+  #   plot_timeline(test_data)
   # Times in days
-  test_that(TRUE)
+  expect_true(TRUE)
 })
 
 test_that("Fully fledged test case", {
@@ -77,13 +78,5 @@ test_that("Fully fledged test case", {
                               add_legend, plot_size_ratios,
                               overlap_plots_names = overlap_plots_names, color_mapping = NULL, 
                               order_plots = order_plots, plot_output = T)
+  expect_true(TRUE)
 })
-
-# Things to verify
-# Test that the label has come correctly
-# Test that the x
-
-expect_true(TRUE)
-
-
-plotly::ggplotly(state_plots[[1]])
