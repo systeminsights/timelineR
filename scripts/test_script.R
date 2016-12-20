@@ -37,7 +37,8 @@ output_grob = plot_timeline(timeline_df, data_cols, start_time, end_time,
               ylimits, scale_vals, titles, 
               ylabels, save_path = NULL, 
               add_legend, plot_size_ratios,
-              overlap_plots_names = overlap_plots_names, color_mapping = NULL, order_plots = order_plots)
+              overlap_plots_names = overlap_plots_names, color_mapping = NULL, 
+              order_plots = order_plots, plot_output = T)
   
 # Things to verify
 # Test that the label has come correctly

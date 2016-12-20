@@ -215,30 +215,33 @@ adjust_legend_position <- function(all_plots_grob){
   })
 }
 
-align_and_draw_the_plots <- function(all_plots, overlap_plots_grob, plot_size_ratios, order_plots, save_path){
+align_the_plots <- function(all_plots, overlap_plots_grob, plot_size_ratios, order_plots){
   message("Aligning plots")
   all_plots_grob <- lapply(all_plots, ggplotGrob)
   all_plots_grob = c(all_plots_grob, overlap_plots_grob)
     
   all_plots_grob = adjust_legend_position(all_plots_grob)
   all_plots_grob_scaled <- scale_grob_plots(all_plots_grob, plot_size_ratios)
-  all_plots_grob_ordered <- all_plots_grob_scaled[order_plots]
-  all_plots_rbind <- rbind_grob_plots(all_plots_grob_ordered)
+  if(!is.null(order_plots)) all_plots_grob_scaled <- all_plots_grob_scaled[order_plots]
+  all_plots_rbind <- rbind_grob_plots(all_plots_grob_scaled)
   
-  if(!is.null(save_path)) {
-    message("Writing image to file as PNG in: ",  save_path)
-    png(save_path, width = 1500, height = 800)
-    grid::grid.draw(all_plots_rbind)
-    dev.off() 
-  }
-  
-  if(is.null(save_path)) {
-    message("Plotting")
-    grid::grid.draw(all_plots_rbind)
-  }
   all_plots_rbind
 }
 
+
+draw_the_plots <- function(grob_output, save_path, plot_output = T){
+  if(!is.null(save_path)) {
+    flog.info("Writing image to file as PNG in: ",  save_path)
+    png(save_path, width = 1500, height = 800)
+    grid::grid.draw(grob_output)
+    dev.off() 
+  }
+  
+  if(plot_output) {
+    message("Plotting")
+    grid::grid.draw(grob_output)
+  }
+}
 #' If need arises to add xlabel, they can be added as prefix by passing to this function
 add_pretty_breaks_and_labels_to_one_oplot <- function(ggobject, prt_brks, xlabels){
   break_patterns = list(
