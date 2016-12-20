@@ -190,9 +190,19 @@ rbind_grob_plots <- function(all_plots_grob_scaled){
 }
 
 adjust_legend_position <- function(all_plots_grob){
+  
+  # This function relocated the legend and adjusts the size for a state plot
+  # We first find the location of the legend - 'guide-box' and then if it exists (state plot)
+  # We move the legend to the x-lab row and then adjust the height of the row to the height
+  # that we are getting from the height of the entire guide box(which is a grob in itself)
+  
   mapply(x = all_plots_grob, FUN = function(x) {
-    which_panel <- which(x$layout$name == "guide-box")
-    x$layout[which_panel, c('t', 'b')] =  x$layout[which_panel, c('t', 'b')] + 1
+    # browser()
+    which_guide <- which(x$layout$name == "guide-box")
+    if(length(which_guide) == 0) return(x)
+    which_caption <- which(x$layout$name == "xlab-b")
+    x$layout[which_guide, c('t', 'b')] =  x$layout[which_caption, c('t', 'b')] 
+    x$heights[x$layout[which_guide, c('t')]] = x$grobs[[which_guide]]$heights %>% max()
     x
   })
 }
