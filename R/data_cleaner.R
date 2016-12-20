@@ -79,14 +79,31 @@ get_time_limits <- function(start_time, end_time){
   list(start_time = start_time, end_time = end_time)
 }
 
+get_col_types <- function(timeline_df) {
+  ts_col = names(timeline_df)[timeline_df %>% sapply(is.POSIXct)]
+  numeric_cols = names(timeline_df)[timeline_df %>% sapply(is.numeric)]
+  state_cols = names(timeline_df)[timeline_df %>% sapply(is.character)]
+  
+  if(length(ts_col) == 0) flog.stop("No POSIXct columns detected to assign the timestamp!")
+  if(length(ts_col) > 1) flog.stop("Multiple POSIXct columns detected. Timeline DF should have only on timestamp!")
+  
+  flog.info(sprintf("%s has been selected as the timestamp column", ts_col))
+  flog.info(sprintf("%s has been selected as the numeric column(s)", paste(numeric_cols, collapse = ", ")))
+  flog.info(sprintf("%s has been selected as the state column(s)", paste(state_cols, collapse = ", ")))
+  list(ts_col = ts_col, numeric_cols = numeric_cols, state_cols = state_cols)
+}
+
 check_input_arguments <- function(timeline_df, data_cols, ylimits, scale_vals,
                                   titles, ylabels, overlap_plots, plot_size_ratios){
+  
   if(!all(data_cols %in% names(timeline_df))) flog.stop("All Data columns not in timeline_df!")
   if(!all(names(ylimits) %in% names(timeline_df))) flog.stop("All Ylimit names not in timeline_df!")
   if(!all(names(scale_vals) %in% names(timeline_df))) flog.stop("All scale_vals names not in timeline_df!")
   if(!all(names(titles) %in% c(names(timeline_df),names(overlap_plots)))) flog.stop("All titles names not in timeline_df!")
   if(!all(names(ylabels) %in% names(timeline_df))) flog.stop("All ylabels names not in timeline_df!")
-  # if(!all(names(overlap_plots) %in% names(timeline_df))) flog.stop("All overlap_plots names not in timeline_df!")
-  if(!all(names(plot_size_ratios) %in% names(timeline_df))) flog.stop("All plot_size_ratios names not in timeline_df!")
+  if(!all(names(overlap_plots) %in% c(names(timeline_df), names(overlap_plots)))) 
+    flog.stop("All overlap_plots names not in timeline_df!")
+  if(!all(names(plot_size_ratios) %in% c(names(timeline_df), names(overlap_plots))))
+    flog.stop("All plot_size_ratios names not in timeline_df!")
   return(TRUE)
 }

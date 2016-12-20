@@ -248,10 +248,9 @@ add_pretty_breaks_and_labels_to_one_oplot <- function(ggobject, prt_brks, xlabel
     "Time (HH:MM:SS)"   = "^[[:digit:]]+:[[:digit:]]+:[[:digit:]]+$",
     "Time (HH:MM)"      = "^[[:digit:]]+:[[:digit:]]+$",
     "Time (s)"          = "^[[:digit:]]+$",
-    "Time (Date HH:MM)" = "^[[:alpha:]]+ [[:digit:]]+$",
+    "Time (Date HH:MM)" = "^[[:alpha:]]+ [[:digit:]]+ [[:digit:]]+:[[:digit:]]+$",
     "Time (Date)"       = "^[[:alpha:]]+ [[:digit:]]+$"
   )
-  
   which_pattern = which(sapply(break_patterns, function(x) str_detect(xlabels[2], x)))
   if(length(which_pattern) == 0)  stop("Coudn't find break pattern!")
   
@@ -260,7 +259,7 @@ add_pretty_breaks_and_labels_to_one_oplot <- function(ggobject, prt_brks, xlabel
 }
 
 add_pretty_breaks_and_xlabel <- function(all_plots, time_limits) {
-  prt_brks <- base::pretty(n = 10, x = do.call(c, time_limits))
+  prt_brks <- base::pretty(n = 10, x = time_limits)
   xlabels <- attr(prt_brks, "labels")
 
   sapply(X = all_plots, FUN = add_pretty_breaks_and_labels_to_one_oplot,

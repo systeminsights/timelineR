@@ -42,44 +42,37 @@ plot_timeline <- function(timeline_df, data_cols = NULL, start_time=NULL, end_ti
   # The data.frame should have one timestamp columns, and one or more state and numeric columns
   # state columns SHOULD be factors or characters.
   # numeric columns should be numeric
-  
-  if(!is.null(data_cols)) data_cols = names(timeline_df)
-  
+  if(is.null(data_cols)) data_cols = names(timeline_df)
   check_input_arguments(timeline_df, data_cols, ylimits, scale_vals, titles,
                         ylabels, overlap_plots_names, plot_size_ratios)
   
+  col_type = get_col_types(timeline_df)
+  
   time_limits = get_time_limits(start_time, end_time)
-  ts_col = names(timeline_df)[timeline_df %>% sapply(is.POSIXct)]
-  timeline_df_subset = timeline_df[ , union(ts_col, data_cols)]
+
   
-  timeline_df_subset_range = subset_data_into_time_range(timeline_df_subset, time_limits, ts_col)
-  # remove_nas <- function(timeline_df_subset_range){
-  #   timeline_df_subset_range = timeline_df_subset_range %>% na.omit()
-  # }
-  # 
+  timeline_df_subset = timeline_df[ , union(col_type$ts_col, data_cols)]
+  timeline_df_subset_range = subset_data_into_time_range(timeline_df_subset, time_limits, col_type$ts_col)
+  timeline_cleaned = scale_data(timeline_df_subset_range, scale_vals, col_type$numeric_cols)
+  actual_ylimits <- get_plot_limits(timeline_cleaned, col_type$numeric_cols, ylimits)
   
-  numeric_cols = names(timeline_df_subset_range)[timeline_df_subset_range %>% sapply(is.numeric)]
-  timeline_cleaned = scale_data(timeline_df_subset_range, scale_vals, numeric_cols)
-  
-  state_cols = names(timeline_cleaned)[timeline_cleaned %>% sapply(is.character)]
-  actual_ylimits <- get_plot_limits(timeline_cleaned, numeric_cols, ylimits)
-  
-  unique_state_factors <- lapply(timeline_df_subset_range[state_cols], function(x) if(is.character(x)) unique(x))
+  unique_state_factors <- lapply(timeline_df_subset_range[col_type$state_cols], function(x) if(is.character(x)) unique(x))
   state_plots <- timeline_cleaned %>% 
-    create_state_plots(ts_col, state_cols) %>% 
+    create_state_plots(col_type$ts_col, col_type$state_cols) %>% 
     add_colors_to_state_plots(color_mapping, unique_state_factors)
-  numeric_plots <- create_numeric_plots(timeline_cleaned, ts_col, numeric_cols, actual_ylimits) 
+  numeric_plots <- create_numeric_plots(timeline_cleaned, col_type$ts_col, col_type$numeric_cols, actual_ylimits) 
 
   all_plots <- c(numeric_plots, state_plots) %>% 
     add_legend_to_plots(add_legend) %>% 
     add_titles_to_the_plot(titles) %>% 
-    add_pretty_breaks_and_xlabel(time_limits)
+    add_pretty_breaks_and_xlabel(range(timeline_cleaned[[col_type$ts_col]]))
 
   ## Below function uses some intelligence to label X axis and also add x ticks with breaks
-  all_plots <- add_ylabels_to_the_plot(all_plots, ylabels, state_cols)
+  all_plots <- add_ylabels_to_the_plot(all_plots, ylabels, col_type$state_cols)
   
   # if(returnGG) return(all_plots)
-  overlap_plots_grob <- create_all_overlapping_plots(all_plots, state_cols, numeric_cols, overlap_plots_names, titles)
+  overlap_plots_grob <- create_all_overlapping_plots(all_plots, col_type$state_cols, 
+                                                     col_type$numeric_cols, overlap_plots_names, titles)
   grob_output = align_the_plots(all_plots, overlap_plots_grob, plot_size_ratios, order_plots)
   draw_the_plots(grob_output, save_path, plot_output)
   return(grob_output)
