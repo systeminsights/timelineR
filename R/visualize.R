@@ -68,7 +68,7 @@ plot_timeline <- function(timeline_df, data_cols = NULL, start_time=NULL, end_ti
     create_state_plots(ts_col, state_cols) %>% 
     add_colors_to_state_plots(color_mapping, unique_state_factors)
   numeric_plots <- create_numeric_plots(timeline_cleaned, ts_col, numeric_cols, actual_ylimits) 
-  
+
   all_plots <- c(numeric_plots, state_plots) %>% 
     add_legend_to_plots(add_legend) %>% 
     add_titles_to_the_plot(titles) %>% 
@@ -78,7 +78,7 @@ plot_timeline <- function(timeline_df, data_cols = NULL, start_time=NULL, end_ti
   all_plots <- add_ylabels_to_the_plot(all_plots, ylabels, state_cols)
   
   # if(returnGG) return(all_plots)
-  overlap_plots_grob <- create_all_overlapping_plots(all_plots, state_cols, numeric_cols, overlap_plots_names)
+  overlap_plots_grob <- create_all_overlapping_plots(all_plots, state_cols, numeric_cols, overlap_plots_names, titles)
   grob_output = align_and_draw_the_plots(all_plots, overlap_plots_grob, plot_size_ratios, save_path)  
   return(grob_output)
 }

@@ -121,6 +121,7 @@ add_titles_to_the_plot <- function(all_plots, titles){
     flog.info("Adding new plot titles")
     default_titles[names(titles)] <- titles
   }
+  default_titles = default_titles[names(default_titles) %in% names(all_plots)]
   all_plots <- mapply(FUN = function(x,y) x + ggtitle(y), x=all_plots, y=default_titles, SIMPLIFY = FALSE,USE.NAMES = TRUE)
   return(all_plots)
 }
@@ -276,17 +277,24 @@ check_overlap_plottability <- function(overlap_plots, state_cols, numeric_cols){
            x[2] %in% numeric_cols))
 }
 
-create_all_overlapping_plots <- function(all_plots, state_cols, numeric_cols, overlap_plots){
+create_all_overlapping_plots <- function(all_plots, state_cols, numeric_cols, overlap_plots, titles){
   if(!check_overlap_plottability(overlap_plots, state_cols, numeric_cols)) 
     flog.stop("Incorrect combination of state and numeric plots")
   
-  sapply(overlap_plots, function(x) create_overlapping_plot(all_plots[[x[1]]], all_plots[[x[2]]]),
-         USE.NAMES = T, simplify = F)
+  sapply(names(overlap_plots), function(name_plot) {
+      x = overlap_plots[[name_plot]]
+      if(name_plot %in% names(titles)){
+        create_overlapping_plot(all_plots[[x[1]]], all_plots[[x[2]]], titles[[name_plot]])
+      }else{
+        create_overlapping_plot(all_plots[[x[1]]], all_plots[[x[2]]], name_plot)
+      }
+    },
+    USE.NAMES = T, simplify = F)
 }
 
-create_overlapping_plot <- function(state_plot, numeric_plot){
+create_overlapping_plot <- function(state_plot, numeric_plot, title_name){
   state_plot <- state_plot + theme(panel.grid.minor = element_blank(),
-                                   panel.grid.major = element_blank()) + ylab("")
+                                   panel.grid.major = element_blank()) + ylab("") + ggtitle(title_name)
   
   numeric_plot <- numeric_plot + theme(panel.grid.minor = element_blank(),
                                        panel.grid.major = element_blank(),

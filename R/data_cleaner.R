@@ -84,7 +84,7 @@ check_input_arguments <- function(timeline_df, data_cols, ylimits, scale_vals,
   if(!all(data_cols %in% names(timeline_df))) flog.stop("All Data columns not in timeline_df!")
   if(!all(names(ylimits) %in% names(timeline_df))) flog.stop("All Ylimit names not in timeline_df!")
   if(!all(names(scale_vals) %in% names(timeline_df))) flog.stop("All scale_vals names not in timeline_df!")
-  if(!all(names(titles) %in% names(timeline_df))) flog.stop("All titles names not in timeline_df!")
+  if(!all(names(titles) %in% c(names(timeline_df),names(overlap_plots)))) flog.stop("All titles names not in timeline_df!")
   if(!all(names(ylabels) %in% names(timeline_df))) flog.stop("All ylabels names not in timeline_df!")
   # if(!all(names(overlap_plots) %in% names(timeline_df))) flog.stop("All overlap_plots names not in timeline_df!")
   if(!all(names(plot_size_ratios) %in% names(timeline_df))) flog.stop("All plot_size_ratios names not in timeline_df!")
