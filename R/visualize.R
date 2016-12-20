@@ -33,7 +33,7 @@ plot_timeline <- function(timeline_df, data_cols = NULL, start_time=NULL, end_ti
                           ylimits=NULL, scale_vals=NULL, titles=NULL, 
                           ylabels=NULL, save_path = NULL, 
                           add_legend=TRUE, plot_size_ratios=NULL,
-                          overlap_plots=NULL, color_mapping = list()) {
+                          overlap_plots_names=NULL, color_mapping = list()) {
   
   # This function takes in a data.frame of format
   # |Timestamp|Event_A|Event_B|Sample_A|Sample_B|
@@ -43,8 +43,9 @@ plot_timeline <- function(timeline_df, data_cols = NULL, start_time=NULL, end_ti
   # numeric columns should be numeric
   
   if(!is.null(data_cols)) data_cols = names(timeline_df)
+  
   check_input_arguments(timeline_df, data_cols, ylimits, scale_vals, titles,
-                        ylabels, overlap_plots, plot_size_ratios)
+                        ylabels, overlap_plots_names, plot_size_ratios)
   
   time_limits = get_time_limits(start_time, end_time)
   ts_col = names(timeline_df)[timeline_df %>% sapply(is.POSIXct)]
@@ -68,9 +69,6 @@ plot_timeline <- function(timeline_df, data_cols = NULL, start_time=NULL, end_ti
     add_colors_to_state_plots(color_mapping, unique_state_factors)
   numeric_plots <- create_numeric_plots(timeline_cleaned, ts_col, numeric_cols, actual_ylimits) 
   
-  # combined_plot_list <- create_overlap_plots(overlap_plots, line_plots, event_plots)
-  # combined_plot_list <- create_non_overlap_plots(numeric_plots, state_plots)
-
   all_plots <- c(numeric_plots, state_plots) %>% 
     add_legend_to_plots(add_legend) %>% 
     add_titles_to_the_plot(titles) %>% 
@@ -80,6 +78,7 @@ plot_timeline <- function(timeline_df, data_cols = NULL, start_time=NULL, end_ti
   all_plots <- add_ylabels_to_the_plot(all_plots, ylabels, state_cols)
   
   # if(returnGG) return(all_plots)
-  grob_output = align_and_draw_the_plots(all_plots, numeric_cols, state_cols, plot_size_ratios, save_path)  
+  overlap_plots_grob <- create_all_overlapping_plots(all_plots, state_cols, numeric_cols, overlap_plots_names)
+  grob_output = align_and_draw_the_plots(all_plots, overlap_plots_grob, plot_size_ratios, save_path)  
   return(grob_output)
 }

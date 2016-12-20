@@ -213,11 +213,11 @@ adjust_legend_position <- function(all_plots_grob){
   })
 }
 
-align_and_draw_the_plots <- function(all_plots, numeric_cols, state_plots, plot_size_ratios, save_path){
+align_and_draw_the_plots <- function(all_plots, overlap_plots_grob, plot_size_ratios, save_path){
   message("Aligning plots")
-  
   all_plots_grob <- lapply(all_plots, ggplotGrob)
-  
+  all_plots_grob = c(all_plots_grob, overlap_plots_grob)
+    
   all_plots_grob = adjust_legend_position(all_plots_grob)
   all_plots_grob_scaled <- scale_grob_plots(all_plots_grob, plot_size_ratios)
   all_plots_rbind <- rbind_grob_plots(all_plots_grob_scaled)
@@ -271,8 +271,20 @@ add_grob_to_pos <- function(input_grob, add_grob_table, layout_name){
   return(combined_grob)
 }
 
+check_overlap_plottability <- function(overlap_plots, state_cols, numeric_cols){
+  all(sapply(overlap_plots, function(x) x[1] %in% state_cols &
+           x[2] %in% numeric_cols))
+}
 
-create_overlapping_plots <- function(state_plot, numeric_plot){
+create_all_overlapping_plots <- function(all_plots, state_cols, numeric_cols, overlap_plots){
+  if(!check_overlap_plottability(overlap_plots, state_cols, numeric_cols)) 
+    flog.stop("Incorrect combination of state and numeric plots")
+  
+  sapply(overlap_plots, function(x) create_overlapping_plot(all_plots[[x[1]]], all_plots[[x[2]]]),
+         USE.NAMES = T, simplify = F)
+}
+
+create_overlapping_plot <- function(state_plot, numeric_plot){
   state_plot <- state_plot + theme(panel.grid.minor = element_blank(),
                                    panel.grid.major = element_blank()) + ylab("")
   
