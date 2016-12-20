@@ -67,6 +67,7 @@ subset_data_into_time_range <- function(timeline_df_subset, time_limits, ts_col)
   if(!is.null(time_limits$end_time))   time_range[2] <- time_limits$end_time
   
   # function to subset data frame into time range
+  
   timeline_df_subset %>% filter(timeline_df_subset[[ts_col]] >= time_range[1], timeline_df_subset[[ts_col]] <= time_range[2])
   
 }
@@ -79,12 +80,13 @@ get_time_limits <- function(start_time, end_time){
 }
 
 check_input_arguments <- function(timeline_df, data_cols, ylimits, scale_vals,
-                                  titles, ylabels, overlap_plots){
+                                  titles, ylabels, overlap_plots, plot_size_ratios){
   if(!all(data_cols %in% names(timeline_df))) flog.stop("All Data columns not in timeline_df!")
   if(!all(names(ylimits) %in% names(timeline_df))) flog.stop("All Ylimit names not in timeline_df!")
   if(!all(names(scale_vals) %in% names(timeline_df))) flog.stop("All scale_vals names not in timeline_df!")
   if(!all(names(titles) %in% names(timeline_df))) flog.stop("All titles names not in timeline_df!")
   if(!all(names(ylabels) %in% names(timeline_df))) flog.stop("All ylabels names not in timeline_df!")
-  if(!all(names(overlap_plots) %in% names(timeline_df))) flog.stop("All overlap_plots names not in timeline_df!")
+  # if(!all(names(overlap_plots) %in% names(timeline_df))) flog.stop("All overlap_plots names not in timeline_df!")
+  if(!all(names(plot_size_ratios) %in% names(timeline_df))) flog.stop("All plot_size_ratios names not in timeline_df!")
   return(TRUE)
 }

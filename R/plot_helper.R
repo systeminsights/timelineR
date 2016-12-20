@@ -140,8 +140,14 @@ add_ylabels_to_the_plot <- function(all_plots, ylabels, state_cols){
   return(all_plots)
 }
 
-scale_grob_plots <- function(all_plots_grob, sizelist){
-  mapply(x = all_plots_grob, y = sizelist, FUN = function(x,y) {
+scale_grob_plots <- function(all_plots_grob, plot_size_ratios){
+  # browser()
+  names(all_plots_grob)
+  
+  plot_size_ratios_all = structure(rep(1, length(all_plots_grob)), names=names(all_plots_grob))
+  if(!is.null(plot_size_ratios)) plot_size_ratios_all[names(plot_size_ratios)] = plot_size_ratios
+  
+  mapply(x = all_plots_grob, y = plot_size_ratios_all, FUN = function(x,y) {
     which_panel <- which(x$layout$name == "panel")
     x$heights[which_panel] =  x$heights[which_panel] * y
     x
@@ -207,14 +213,13 @@ adjust_legend_position <- function(all_plots_grob){
   })
 }
 
-align_and_draw_the_plots <- function(all_plots, numeric_cols, state_cols, state_plot_size, save_path){
+align_and_draw_the_plots <- function(all_plots, numeric_cols, state_plots, plot_size_ratios, save_path){
   message("Aligning plots")
   
-  sizelist <- c(rep(1, times = length(numeric_cols)), rep(state_plot_size, times = length(state_cols)))
   all_plots_grob <- lapply(all_plots, ggplotGrob)
   
   all_plots_grob = adjust_legend_position(all_plots_grob)
-  all_plots_grob_scaled <- scale_grob_plots(all_plots_grob, sizelist)
+  all_plots_grob_scaled <- scale_grob_plots(all_plots_grob, plot_size_ratios)
   all_plots_rbind <- rbind_grob_plots(all_plots_grob_scaled)
   
   if(!is.null(save_path)) {

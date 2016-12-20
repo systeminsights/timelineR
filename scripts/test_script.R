@@ -23,6 +23,7 @@ scale_vals = c("SPEED-ACTUAL" = 1e-4, "SPEED-OVER" = 1e2)  %>% match_grep(names(
 data_cols = c("MODE", "EXEC", "SPEED") %>% match_grep(names(timeline_df), use_values = T, return_names = T)
 titles = c("MODE" = "THE MODE", "EXEC" = "THE EX", "SPEED-ACTUAL" = "PEED") %>% match_grep(names(timeline_df))
 ylabels = c("MODE" = "THE MODE", "execution" = "THE EX", "s_speed" = "PEED") %>% match_grep(names(timeline_df))
+plot_size_ratios = c("MODE" = 0.5, "execution" = 0.5, "SPEED-ACTUAL" = 2) %>% match_grep(names(timeline_df))
 # color_mapping = list("MODE" = c("Unavailable" = "gray", "AUTOMATIC" = "darkgreen"),
                      # "EXEC" = c("ACTIVE" = "darkgreen", "READY" = "blue", "Unavailable" = "gray")) %>% match_grep(names(timeline_df))
 overlap_plots = NULL
@@ -32,7 +33,7 @@ state_plot_size = .3
 output_grob = plot_timeline(timeline_df, data_cols, start_time, end_time,
               ylimits, scale_vals, titles, 
               ylabels, save_path = NULL, 
-              add_legend, state_plot_size,
+              add_legend, plot_size_ratios,
               overlap_plots = NULL, color_mapping = NULL)
   
 # Things to verify
