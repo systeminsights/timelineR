@@ -30,11 +30,14 @@ plot_size_ratios = c("MODE" = 0.5, "execution" = 0.5, "SPEED-ACTUAL" = 2) %>% ma
 overlap_plots_names = list("MODE-ACTUAL" = rev(c("MODE", "ACTUAL") %>% match_grep(names(timeline_df), use_values = T, return_names = T)),
                      "EX-COM" = c("EXEC", "COMM") %>% match_grep(names(timeline_df), use_values = T, return_names = T) %>% rev)
 
+order_plots = c("MODE", "EXEC") %>% match_grep(names(timeline_df), use_values = T, return_names = T)
+order_plots = c(order_plots, "MODE-ACTUAL", "EX-COM")
+
 output_grob = plot_timeline(timeline_df, data_cols, start_time, end_time,
               ylimits, scale_vals, titles, 
               ylabels, save_path = NULL, 
               add_legend, plot_size_ratios,
-              overlap_plots_names = overlap_plots_names, color_mapping = NULL)
+              overlap_plots_names = overlap_plots_names, color_mapping = NULL, order_plots = order_plots)
   
 # Things to verify
 # Test that the label has come correctly

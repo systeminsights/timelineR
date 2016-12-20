@@ -33,7 +33,8 @@ plot_timeline <- function(timeline_df, data_cols = NULL, start_time=NULL, end_ti
                           ylimits=NULL, scale_vals=NULL, titles=NULL, 
                           ylabels=NULL, save_path = NULL, 
                           add_legend=TRUE, plot_size_ratios=NULL,
-                          overlap_plots_names=NULL, color_mapping = list()) {
+                          overlap_plots_names=NULL, color_mapping = list(),
+                          order_plots = NULL) {
   
   # This function takes in a data.frame of format
   # |Timestamp|Event_A|Event_B|Sample_A|Sample_B|
@@ -79,6 +80,6 @@ plot_timeline <- function(timeline_df, data_cols = NULL, start_time=NULL, end_ti
   
   # if(returnGG) return(all_plots)
   overlap_plots_grob <- create_all_overlapping_plots(all_plots, state_cols, numeric_cols, overlap_plots_names, titles)
-  grob_output = align_and_draw_the_plots(all_plots, overlap_plots_grob, plot_size_ratios, save_path)  
+  grob_output = align_and_draw_the_plots(all_plots, overlap_plots_grob, plot_size_ratios, order_plots, save_path)  
   return(grob_output)
 }

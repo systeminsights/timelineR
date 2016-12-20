@@ -112,7 +112,8 @@ get_plot_limits <- function(timeline_cleaned, numeric_plots, ylimits){
   default_ylimits[numeric_cols]
 }
 
-
+# The titles list has all the info including the ones for overlapping plots
+# so we add a filter to keep only the names in the plots
 add_titles_to_the_plot <- function(all_plots, titles){
   default_titles <- names(all_plots)
   names(default_titles) <- names(all_plots)
@@ -214,14 +215,15 @@ adjust_legend_position <- function(all_plots_grob){
   })
 }
 
-align_and_draw_the_plots <- function(all_plots, overlap_plots_grob, plot_size_ratios, save_path){
+align_and_draw_the_plots <- function(all_plots, overlap_plots_grob, plot_size_ratios, order_plots, save_path){
   message("Aligning plots")
   all_plots_grob <- lapply(all_plots, ggplotGrob)
   all_plots_grob = c(all_plots_grob, overlap_plots_grob)
     
   all_plots_grob = adjust_legend_position(all_plots_grob)
   all_plots_grob_scaled <- scale_grob_plots(all_plots_grob, plot_size_ratios)
-  all_plots_rbind <- rbind_grob_plots(all_plots_grob_scaled)
+  all_plots_grob_ordered <- all_plots_grob_scaled[order_plots]
+  all_plots_rbind <- rbind_grob_plots(all_plots_grob_ordered)
   
   if(!is.null(save_path)) {
     message("Writing image to file as PNG in: ",  save_path)
