@@ -11,6 +11,17 @@ give_match_status <- function(grep_result, actual_names, echo = F){
   rowSums(grep_result) == 1
 }
 
+#' @title Regular expression based extraction
+#' @description This function does a regular expression based search for each name in one vector for the values in the other vector and
+#' returns a named vector with names as the matched names and values as given in the queried vector. 
+#' @param grep_vec A named vector with the names to be searched for and the values, which the matching names should hold.
+#' It can also be a unnamed vector of names to search for. 
+#' @param actual_names A vector giving the names in which the search is to be made
+#' @param use_values Logical value. (TRUE) if the values in the grep_vec are to be used for searching. Defualut is FALSE
+#' @param return_name Logical value (TRUE) if just want to return the matching names and not the values. Defualut is FALSE
+#' @param echo Logical value(TRUE) To print for each name in the grep_vec, which values in actual_names match and didnt match.
+#'  Defualut is FALSE
+#' @return A named vector with the matched names and substituted values or a vector of macthed names
 match_grep <- function(grep_vec, actual_names, use_values = F, return_names = F, echo = F) {
   
   if(use_values) names(grep_vec) = grep_vec

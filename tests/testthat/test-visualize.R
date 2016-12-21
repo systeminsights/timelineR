@@ -25,6 +25,10 @@ test_that("Default Plotting", {
   # colours have been assigned automatically according to ggplot
 })
 
+test_that("Default Plotting", {
+  plot_timeline(test_data, add_legend = F)
+})
+
 test_that("Different Time ranges", {
   test_data$start_time = start_timestamp + cumsum(sample(1:10, 6, replace = T))
   plot_timeline(test_data)
@@ -63,6 +67,7 @@ test_that("Fully fledged test case", {
   
   ylimits = list("num_2" = c(100, 200)) 
   scale_vals = c("num_1" = 1e2)
+  data_cols = c("state" = 1 , "num" = 2) %>% match_grep(names(test_data)) %>% names()
   data_cols = c("state", "num") %>% match_grep(names(test_data), use_values = T, return_names = T)
   titles = c("num_1" = "First Numeric", "num_2" = "Second Numeric", "state_1" = "Last State")
   titles = c(titles, "state_1_num_2" = "First Numeric and Last State")
@@ -76,7 +81,30 @@ test_that("Fully fledged test case", {
                               ylimits, scale_vals, titles, 
                               ylabels, save_path = save_path, 
                               add_legend, plot_size_ratios,
-                              overlap_plots_names = overlap_plots_names, color_mapping = NULL, 
+                              overlap_plots_names = overlap_plots_names, color_mapping = color_mapping, 
+                              order_plots = order_plots, plot_output = T)
+  
+  ## without title for overlapping plot
+  titles = c("num_1" = "First Numeric", "num_2" = "Second Numeric", "state_1" = "Last State")
+  output_grob = plot_timeline(test_data, data_cols, start_time, end_time,
+                              ylimits, scale_vals, titles, 
+                              ylabels, save_path = save_path, 
+                              add_legend, plot_size_ratios,
+                              overlap_plots_names = overlap_plots_names, color_mapping = color_mapping, 
                               order_plots = order_plots, plot_output = T)
   expect_true(TRUE)
+})
+
+context("wrong color mapping")
+test_that("Case 1: not all states have defined mapping",{
+  color_mapping = list("state_1" = c("A" = "green", "B" = "Blue"))
+  expect_error(plot_timeline(timeline_df = test_data, color_mapping = color_mapping))
+
+  color_mapping = list("state_1" = c("A" = "green", "B" = "Blue", "C" = "Red", "D" = "Yellow"))
+  expect_error(plot_timeline(timeline_df = test_data, color_mapping = color_mapping))
+})
+
+test_that("Case 2: undefined states have mapping",{
+  color_mapping = list("state_1" = c("A" = "green", "B" = "Blue", "D" = "Red"))
+  expect_error(plot_timeline(timeline_df = test_data, color_mapping = color_mapping))
 })
