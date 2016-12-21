@@ -10,10 +10,10 @@ generate_state_plot_layer <- function(data_to_plot) {
                        ymin = 0L, ymax = 1L, fill = value)) 
 }
 
-generate_numeric_plot_layer <- function(data_to_plot, current_ylimit, line_width=0.3) {
+generate_numeric_plot_layer <- function(data_to_plot, current_ylimit, plot_fun, line_width=0.3) {
   names(data_to_plot)[2] = "value"
   ggplot() + 
-    geom_step(data=data_to_plot, aes_string(x = names(data_to_plot)[1], y = "value", group = 1), size = line_width) +
+    plot_fun(data=data_to_plot, aes_string(x = names(data_to_plot)[1], y = "value", group = 1), size = line_width) +
     coord_cartesian(ylim = current_ylimit)
     
 }
@@ -30,11 +30,20 @@ create_state_plots <- function(timeline_cleaned, ts_col, state_cols){
 }
 
 
-create_numeric_plots <- function(timeline_cleaned, ts_col, numeric_cols, actual_ylimits){
+get_numeric_plot_function <- function(numeric_plot_type){
+  if(numeric_plot_type == "line" ) return(geom_line)
+  if(numeric_plot_type == "step" ) return(geom_step)
+  if(numeric_plot_type == "point" ) return(geom_point)
+  stop("Unsupported plot type for numeric data type")
+}
+
+
+create_numeric_plots <- function(timeline_cleaned, ts_col, numeric_cols, actual_ylimits, numeric_plot_type){
   flog.info("creating sample plot layers")
+  plot_fun = get_numeric_plot_function(numeric_plot_type)
   numeric_plots <- mapply(current_plot = numeric_cols, current_ylimit = actual_ylimits,
                           FUN = function(current_plot, current_ylimit)
-                            generate_numeric_plot_layer(timeline_cleaned[, c(ts_col, current_plot)], current_ylimit),
+                            generate_numeric_plot_layer(timeline_cleaned[, c(ts_col, current_plot)], current_ylimit, plot_fun),
                           SIMPLIFY = F, USE.NAMES = T)
   
   return(numeric_plots)

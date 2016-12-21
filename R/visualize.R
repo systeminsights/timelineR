@@ -41,7 +41,7 @@ plot_timeline <- function(timeline_df, data_cols = NULL, start_time=NULL, end_ti
                           ylabels=NULL, save_path = NULL, 
                           add_legend=TRUE, plot_size_ratios=NULL,
                           overlap_plots_names=NULL, color_mapping = list(),
-                          order_plots = NULL, plot_output = T) {
+                          order_plots = NULL, plot_output = T, numeric_plot_type = "line") {
   
   # This function takes in a data.frame of format
   # |Timestamp|Event_A|Event_B|Sample_A|Sample_B|
@@ -52,7 +52,7 @@ plot_timeline <- function(timeline_df, data_cols = NULL, start_time=NULL, end_ti
   if(is.null(data_cols)) data_cols = names(timeline_df)
   check_input_arguments(timeline_df, data_cols, ylimits, scale_vals, titles,
                         ylabels, overlap_plots_names, plot_size_ratios)
-  timeline_df %>% mutate_if(is.factor, as.character) -> timeline_df  
+  timeline_df %>% mutate_if(is.factor, as.character) -> timeline_df # TO CHECK 
   col_type = get_col_types(timeline_df)
   
   time_limits = get_time_limits(start_time, end_time)
@@ -67,7 +67,7 @@ plot_timeline <- function(timeline_df, data_cols = NULL, start_time=NULL, end_ti
   state_plots <- timeline_cleaned %>% 
     create_state_plots(col_type$ts_col, col_type$state_cols) %>% 
     add_colors_to_state_plots(color_mapping, unique_state_factors)
-  numeric_plots <- create_numeric_plots(timeline_cleaned, col_type$ts_col, col_type$numeric_cols, actual_ylimits) 
+  numeric_plots <- create_numeric_plots(timeline_cleaned, col_type$ts_col, col_type$numeric_cols, actual_ylimits, numeric_plot_type) 
 
   all_plots <- c(numeric_plots, state_plots) %>% 
     add_legend_to_plots(add_legend) %>% 

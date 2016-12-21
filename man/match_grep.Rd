@@ -15,10 +15,10 @@ It can also be a unnamed vector of names to search for.}
 
 \item{use_values}{Logical value. (TRUE) if the values in the grep_vec are to be used for searching. Defualut is FALSE}
 
+\item{return_names}{Logical value (TRUE) if just want to return the matching names and not the values. Defualut is FALSE}
+
 \item{echo}{Logical value(TRUE) To print for each name in the grep_vec, which values in actual_names match and didnt match.
 Defualut is FALSE}
-
-\item{return_name}{Logical value (TRUE) if just want to return the matching names and not the values. Defualut is FALSE}
 }
 \value{
 A named vector with the matched names and substituted values or a vector of macthed names
