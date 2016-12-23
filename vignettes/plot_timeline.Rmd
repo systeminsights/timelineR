@@ -16,8 +16,9 @@ The `plot_timeline` function in R helps visualize multi-variate time-series havi
 The structure of the input data frame should have one column of the type `POSIXct`. This column is used as the `timestamp` column.
 
 ```{r}
+library(dplyr)
 data_path <- system.file("extdata/delhi_air_pollution.csv", package = "timelineR")
-air_pollution <- read.csv(data_path)
+air_pollution <- read.csv(data_path) %>% mutate(date = as.POSIXct(date)) %>% filter(date < as.POSIXct("2016-05-01"))
 air_pollution$date = as.POSIXct(air_pollution$date)
 ```
 
@@ -198,3 +199,7 @@ plot_grob <- plot_timeline(air_pollution, data_cols = data_cols, overlap_plots_n
 ### Saving the plots
 
 It is possible to save the plot from the function. The name to be saved is passed as `save_path` argument. Only PNG format is supported.
+
+
+# Auxiliary data helper function
+
