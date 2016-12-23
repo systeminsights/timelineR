@@ -203,3 +203,46 @@ It is possible to save the plot from the function. The name to be saved is passe
 
 # Auxiliary data helper function
 
+To ease the procedure of extracting required names which are passed as arguments in the `plot_timeline` function, a helper function `match_grep` based on regular expression is provided for the same.
+
+```{r}
+data_path <- system.file("extdata/test_data.csv", package = "timelineR")
+test_data <- read.csv(data_path)
+test_data %>% str
+```
+
+## `match_grep`
+
+The first argument `grep_vec` is the named vector which is to be searched. The second vector `actual_names` is the vector in which the search is to be named. A named vector is returned with the names as the matched names and values given in `grep_vec`.
+
+```{r}
+grep_vec = c("state" = 1, "num" = 2)
+match_grep(grep_vec, names(test_data))
+```
+
+### Un named `grep_vec`
+
+If it is required to search the values given in a vector then the argument `use_values` should be set as `TRUE`.
+
+```{r}
+grep_vec = c("state" , "num")
+match_grep(grep_vec, names(test_data), use_values = T)
+```
+
+### Return the names
+
+To return just the matched values from `actual_names` instead of the named vector, pass the argument `return_names` as `TRUE`.
+
+```{r}
+grep_vec = c("state" , "num")
+match_grep(grep_vec, names(test_data), use_values = T, return_names = T)
+```
+
+### Show information of matched and unmatched names
+
+To show for each value searched, what values in `actual_names` matched or not, the argument `echo` can be set to `TRUE`.
+
+```{r}
+grep_vec = c("state" , "num")
+match_grep(grep_vec, names(test_data), use_values = T, return_names = T, echo = T)
+```
