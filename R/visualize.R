@@ -34,6 +34,8 @@
 #' @param order_plots A vector containing the name of the plots to be plotted. The plots in the final output are 
 #' arranged according to the order of the names in this vector.
 #' @param plot_output Logical argument to specify if the output is required to be plotted or not. TRUE(default)
+#' @param numeric_plot_type The plot type for numeric variables. It can be either of the type `line`,`step` or `point`. 
+#' By default the type is `line`.
 #' @return A grob of all the plots 
 #' @export
 plot_timeline <- function(timeline_df, data_cols = NULL, start_time=NULL, end_time=NULL,

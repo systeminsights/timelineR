@@ -51,6 +51,9 @@ the data frame. Each named vector for a state should have color mapping for all 
 arranged according to the order of the names in this vector.}
 
 \item{plot_output}{Logical argument to specify if the output is required to be plotted or not. TRUE(default)}
+
+\item{numeric_plot_type}{The plot type for numeric variables. It can be either of the type `line`,`step` or `point`. 
+By default the type is `line`.}
 }
 \value{
 A grob of all the plots
