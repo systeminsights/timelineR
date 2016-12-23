@@ -2,7 +2,7 @@
 give_match_status <- function(grep_result, actual_names, echo = F){
   no_matches = rowSums(grep_result) < 1
   if(echo && sum(no_matches))
-    flog.info(sprintf("No matches found for scaling %s", paste(actual_names[no_matches], collapse = ", ")))
+    flog.info(sprintf("No matches found for %s", paste(actual_names[no_matches], collapse = ", ")))
   
   multiple_matches = rowSums(grep_result) > 1
   if(echo && sum(multiple_matches))
@@ -20,7 +20,7 @@ give_match_status <- function(grep_result, actual_names, echo = F){
 #' @param use_values Logical value. (TRUE) if the values in the grep_vec are to be used for searching. Defualut is FALSE
 #' @param return_names Logical value (TRUE) if just want to return the matching names and not the values. Defualut is FALSE
 #' @param echo Logical value(TRUE) To print for each name in the grep_vec, which values in actual_names match and didnt match.
-#'  Defualut is FALSE
+#'  Default is FALSE
 #' @return A named vector with the matched names and substituted values or a vector of macthed names
 #' @export
 match_grep <- function(grep_vec, actual_names, use_values = F, return_names = F, echo = F) {
