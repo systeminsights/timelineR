@@ -11,22 +11,41 @@ vignette: >
 
 # Plot timelineR
 
-The `plot_timeline` function in R helps visualize multi-variate time-series having numeric and factor variables. The data used for demonstration is the pollution levels in Delhi, which is downloaded from http://www.cpcb.gov.in/ .
+The `plot_timeline` function in R helps visualize multi-variate 
+time-series having numeric and state variables. The data used for
+demonstration details the pollution levels in Delhi, which is downloaded from http://www.cpcb.gov.in/ .
 
-The structure of the input data frame should have one column of the type `POSIXct`. This column is used as the `timestamp` column.
+In this package, the `futile:logger` package is used for logging since it provides 
+a more granular control over the logging. This is useful to use the package in production
+systems but you can treat the logs like normal R logs.
+
+## Input data
+
+For the package to work correctly, it expects the data to be structured in a specific way with a 
+single timestamp column and one or more state and numeric variables. 
+
+State variables are variables represented by `factor` or `character` columns, are categorical in nature.
+
+Numeric variables are represented by `numeric` columns, are numeric and ordinal in nature.
+
+Also, input data frame should have one column of the type `POSIXct` which represents the time of 
+occurence of each observation. 
 
 ```{r}
-library(dplyr)
+library(dplyr, quietly = T)
 data_path <- system.file("extdata/delhi_air_pollution.csv", package = "timelineR")
 air_pollution <- read.csv(data_path) %>% mutate(date = as.POSIXct(date)) %>% filter(date < as.POSIXct("2016-05-01"))
 air_pollution$date = as.POSIXct(air_pollution$date)
+str(air_pollution)
 ```
 
 ## `plot_timeline`
 
 ### default plotting
 
-The default confifuration of the `plot_timeline` package plots univariate time series for all the variables in the order they appear in the data frame. It returns a grob object.
+The default configuration of the `plot_timeline` package plots univariate 
+time series for all the variables in the order they appear 
+in the data frame. It returns a `grob` object (`grid` package).
 
 ```{r, fig.width=8, fig.height=10}
 require(timelineR)
@@ -35,7 +54,9 @@ plot_grob <- plot_timeline(air_pollution)
 
 ### Subset the variables to plot
 
-The columns for which the data should be plotted can be subsetted by passing the names of the column in the argument `data_cols`. By default, the data for all the variables is plotted.
+The columns for which the data should be plotted can be subsetted 
+by passing the names of the column in the argument `data_cols`. By default, 
+the data for all the variables is plotted.
 
 ```{r, fig.width=8, fig.height=4}
 data_cols = c("pm10", "no")
@@ -92,9 +113,11 @@ plot_grob <- plot_timeline(air_pollution, data_cols = data_cols, add_legend = F)
 
 For changing the fill color values for the plot of state variables, a color mapping can be passed. Color mapping can be defined for one or more state variables. However for a given state variable, mapping should be defined for all the possible states in that variable.
 
+The package internally uses the ggplot package and accepts color input in the format supported by `ggplot`
+
 ```{r, fig.width=8, fig.height=2}
 data_cols = c("odd_even")
-color_mapping = list("odd_even" = c("NORMAL" = "blue", "ODD-EVEN" = "red"))
+color_mapping = list("odd_even" = c("NORMAL" = "#E67E22", "ODD-EVEN" = "green4"))
 plot_grob <- plot_timeline(air_pollution, data_cols = data_cols, color_mapping = color_mapping)
 ```
 
