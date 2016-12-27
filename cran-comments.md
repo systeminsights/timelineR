@@ -1,7 +1,7 @@
 ## New submission
 
 ## Test environments
-* local OS X install, R 3.1.2
+* local OS X(10.11.6) install, R 3.3.2
 * local ubuntu 15.10 install, R 3.3.1
 * win-builder (devel and release)
 
