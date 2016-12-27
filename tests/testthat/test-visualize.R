@@ -7,7 +7,8 @@ offsets = c(10, 30, 21, 7, 10, 32)
 test_data = data.frame(
   start_time = start_timestamp + offsets,
   state_1 = c("A", "A", "B", "B", "C", "C"),
-  state_2 = c("Ananthu", "Mohsin", "Alex", "Rakesh", "Subbu", "Nitin"),
+  # state_2 = c("Ananthu", "Mohsin", "Alex", "Rakesh", "Subbu", "Nitin"),
+  state_2 = c("User1", "User1", "User1", "User2", "User2", "User1"),
   num_1 = c(1, 2, 3, 4, 3, 2),
   num_2 = c(200, 250, 529, 1230, 123, 12)
 )
