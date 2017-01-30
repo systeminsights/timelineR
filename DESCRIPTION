@@ -12,7 +12,8 @@ Imports:
     futile.logger,
     ggplot2,
     gtable,
-    grid
+    grid,
+    mtconnectR
 Suggests:
     testthat,
     knitr,
