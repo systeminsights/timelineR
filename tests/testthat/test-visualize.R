@@ -10,8 +10,8 @@ test_data = data.frame(
   # state_2 = c("Ananthu", "Mohsin", "Alex", "Rakesh", "Subbu", "Nitin"),
   state_2 = c("User1", "User1", "User1", "User2", "User2", "User1"),
   num_1 = c(1, 2, 3, 4, 3, 2),
-  num_2 = c(200, 250, 529, 1230, 123, 12)
-)
+  num_2 = c(200, 250, 529, 1230, 123, 12),
+  state_3 = c("employee")) %>% dplyr::arrange(start_time)
 str(test_data)
 
 # This function have to be manually tested
