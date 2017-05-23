@@ -1,23 +1,28 @@
 Package: timelineR
 Title: What the Package Does (one line, title case)
 Version: 0.1.0
-Authors@R: person("Mohsin", "Vindhani", email = "mohsin@systeminsights.com", role = c("aut", "cre"))
-Description: This function helps to visualize multi-variate time-series having numeric and factor variables. 
+Authors@R: c(
+ person("Mohsin", "Vindhani", email = "mohsin@systeminsights.com", role = c("aut", "cre")),
+ person("Alex", "Joseph", email = "alex@systeminsights.com", role = c("aut")),
+ person("Ananthapadmanabhan", email = "ananthu@systeminsights.com", role = c("aut")),
+ person("Subramanyam", "Ravishankar", email = "subramanyam@systeminsights.com", role = c("aut"))
+ )
+Description: This function helps to visualize multi-variate time-series having numeric and factor variables.
 Depends:
-    R (>= 3.3.0)
+   R (>= 3.3.0)
 Imports:
-    dplyr,
-    lubridate,
-    stringr,
-    futile.logger,
-    ggplot2,
-    gtable,
-    grid,
-    mtconnectR
+   dplyr,
+   lubridate,
+   stringr,
+   futile.logger,
+   ggplot2,
+   gtable,
+   grid,
+   mtconnectR
 Suggests:
-    testthat,
-    knitr,
-    rmarkdown
+   testthat,
+   knitr,
+   rmarkdown
 License: AGPL-3
 Encoding: UTF-8
 LazyData: true
