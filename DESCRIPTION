@@ -1,5 +1,5 @@
 Package: timelineR
-Title: What the Package Does (one line, title case)
+Title: Visualization For Time Series Data
 Version: 0.1.0
 Authors@R: c(
  person("Mohsin", "Vindhani", email = "mohsin@systeminsights.com", role = c("aut", "cre")),
@@ -9,6 +9,8 @@ Authors@R: c(
  )
 Maintainer: Mohsin Vindhani <mohsin@systeminsights.com>
 Description: This function helps to visualize multi-variate time-series having numeric and factor variables.
+    You can use the package for visual analysis of data by plotting the data for each variable in the desired order and study
+    interaction between a factor and a numeric variable by creating overlapping plots.
 Depends:
    R (>= 3.3.0)
 Imports:
@@ -26,6 +28,6 @@ Suggests:
    rmarkdown
 License: AGPL-3
 Encoding: UTF-8
-LazyData: true
+LazyData: TRUE
 RoxygenNote: 6.0.1
 VignetteBuilder: knitr
