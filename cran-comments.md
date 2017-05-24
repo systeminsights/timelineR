@@ -1,4 +1,10 @@
-## New submission
+## Resubmission
+
+This is a resubmission. In this version, I have:
+
+* Converted the DESCRIPTION title to title case
+
+* Augmented the package Description in DESCRIPTION file.
 
 ## Test environments
 * local OS X(10.11.6) install, R 3.3.2
