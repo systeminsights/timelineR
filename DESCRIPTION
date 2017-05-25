@@ -1,5 +1,5 @@
 Package: timelineR
-Title: Visualization For Time Series Data
+Title: Visualization for Time Series Data
 Version: 0.1.0
 Authors@R: c(
  person("Mohsin", "Vindhani", email = "mohsin@systeminsights.com", role = c("aut", "cre")),
@@ -8,7 +8,7 @@ Authors@R: c(
  person("Subramanyam", "Ravishankar", email = "subramanyam@systeminsights.com", role = c("aut"))
  )
 Maintainer: Mohsin Vindhani <mohsin@systeminsights.com>
-Description: This function helps to visualize multi-variate time-series having numeric and factor variables.
+Description: Helps to visualize multi-variate time-series having numeric and factor variables.
     You can use the package for visual analysis of data by plotting the data for each variable in the desired order and study
     interaction between a factor and a numeric variable by creating overlapping plots.
 Depends:
