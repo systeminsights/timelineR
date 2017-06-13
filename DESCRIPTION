@@ -1,6 +1,6 @@
 Package: timelineR
 Title: Visualization for Time Series Data
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: c(
  person("Mohsin", "Vindhani", email = "mohsin@systeminsights.com", role = c("aut", "cre")),
  person("Alex", "Joseph", email = "alex@systeminsights.com", role = c("aut")),
