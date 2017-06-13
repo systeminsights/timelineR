@@ -326,7 +326,7 @@ create_overlapping_plot <- function(state_plot, numeric_plot, title_name){
 #' @export
 
 generate_color_mapping <- function(df, default_color_mapping) {
-  
+  timestamp = NULL
   df <- df %>% dplyr::select(-timestamp)
   cols_name <- colnames(df)
   
