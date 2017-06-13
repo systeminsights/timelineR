@@ -84,6 +84,7 @@ check_colors_mapping <- function(state_factors, user_defined_mapping){
 }
 
 add_colors_to_state_plots <- function(all_plots, color_mapping, unique_state_factors){
+  
   names_all_plots <- names(all_plots)
   all_plots <- lapply(1:length(all_plots), function(i) {
     basic_plot <- all_plots[[i]]
@@ -314,4 +315,26 @@ create_overlapping_plot <- function(state_plot, numeric_plot, title_name){
   
   combined_grob$widths[3] = numeric_grob_table$widths[3]
   return(combined_grob)
+}
+
+#' @title Generate color mapping for all plots
+#' @description When all the plots have the same set of values, instead of typing the color mapping for all plots, default color to value mapping can be given which will generate the color mapping for all the plots based on the unique values present in each column
+#' @param df Data frame to be plotted using plot_timeline
+#' @param default_color_mapping Value to color mapping for all the plots in the data frame. ex: default_color_mapping <- c("0" = "#BCBEC0", "1" = "#1279C6")
+#' @usage 
+#' generate_color_mapping(df, default_color_mapping)
+#' @export
+
+generate_color_mapping <- function(df, default_color_mapping) {
+  timestamp = NULL
+  df <- df %>% dplyr::select(-timestamp)
+  cols_name <- colnames(df)
+  
+  color_mapping <- lapply(cols_name, function(l) {
+    unique_values_cols <- unique(df[[l]])
+    req_mapping <- default_color_mapping[names(default_color_mapping) %in% unique_values_cols]
+    req_mapping
+  })
+  names(color_mapping) <- cols_name
+  color_mapping
 }
