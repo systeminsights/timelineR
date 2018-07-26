@@ -229,10 +229,10 @@ align_the_plots <- function(all_plots, overlap_plots_grob, plot_size_ratios, ord
 }
 
 
-draw_the_plots <- function(grob_output, save_path, plot_output = T){
+draw_the_plots <- function(grob_output, save_path, plot_output = T, output_width, output_height){
   if(!is.null(save_path)) {
     flog.info("Writing image to file as PNG in: ",  save_path)
-    png(save_path, width = 1500, height = 800)
+    png(save_path, width = output_width, height = output_height)
     grid::grid.draw(grob_output)
     dev.off() 
   }
