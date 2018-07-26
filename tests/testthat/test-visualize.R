@@ -11,8 +11,9 @@ test_data = data.frame(
   state_2 = c("User1", "User1", "User1", "User2", "User2", "User1"),
   num_1 = c(1, 2, 3, 4, 3, 2),
   num_2 = c(200, 250, 529, 1230, 123, 12),
+  num_3 = c(100, 150, 429, 1130, 223, 32),
   state_3 = c("employee")) %>% dplyr::arrange(start_time)
-str(test_data)
+
 
 # This function have to be manually tested
 context("Testing Plot visualize")
@@ -66,17 +67,17 @@ test_that("Fully fledged test case", {
   save_path = "device.png"
   add_legend = T
   
-  ylimits = list("num_2" = c(100, 200)) 
+  ylimits = list("num_2" = c(100, 220)) 
   scale_vals = c("num_1" = 1e2)
   data_cols = c("state" = 1 , "num" = 2) %>% match_grep(names(test_data)) %>% names()
   data_cols = c("state", "num") %>% match_grep(names(test_data), use_values = T, return_names = T)
   titles = c("num_1" = "First Numeric", "num_2" = "Second Numeric", "state_1" = "Last State")
-  titles = c(titles, "state_1_num_2" = "First Numeric and Last State")
+  titles = c(titles, "state_1_num_1_num_2" = "First Numeric and Last State")
   ylabels = c("state_1" = "State Label", "num_2" = "Numeric Label")
-  plot_size_ratios = c("state_1" = 0.5, "state_2" = 0.5, "state_1_num_2" = 2)
+  plot_size_ratios = c("state_1" = 0.5, "state_2" = 0.5, "state_1_num_1_num_2" = 2)
   color_mapping = list("state_1" = c("A" = "green", "B" = "Blue", "C" = "red"))
-  overlap_plots_names = list("state_1_num_2" = c("state_1", "num_2"))
-  order_plots = c("state_1_num_2", "state_1", "num_1", "state_2", "num_2")
+  overlap_plots_names = list("state_1_num_1_num_2" = c("state_1", "num_2", "num_3"))
+  order_plots = c("state_1_num_1_num_2", "state_1", "num_1", "state_2", "num_2")
   
   output_grob = plot_timeline(test_data, data_cols, start_time, end_time,
                               ylimits, scale_vals, titles, 

@@ -268,50 +268,63 @@ add_pretty_breaks_and_xlabel <- function(all_plots, time_limits) {
 }
 
 
-add_grob_to_pos <- function(input_grob, add_grob_table, layout_name){
-  add_pos <- subset(add_grob_table$layout, add_grob_table$layout$name == layout_name)[, c("t", "l", "b", "r")]
-  add_grob <- add_grob_table$grobs[[which(add_grob_table$layout$name == layout_name)]]
-  combined_grob <- gtable_add_grob(input_grob, add_grob, 
-                                   add_pos$t, add_pos$l, add_pos$b, add_pos$r)
+add_multiple_grobs_to_pos <- function(input_grob, add_grob_tables, layout_name){
+  add_pos <- subset(add_grob_tables[[1]]$layout, add_grob_tables[[1]]$layout$name == layout_name)[, c("t", "l", "b", "r")]
+  add_grobs <- lapply(add_grob_tables, function(add_grob_table) add_grob_table$grobs[[which(add_grob_table$layout$name == layout_name)]])
+  
+  combined_grob <- gtable::gtable_add_grob(input_grob, add_grobs, add_pos$t, add_pos$l, add_pos$b, add_pos$r,
+                                           name = paste0("layout_", 1:length(add_grobs)))
+  
   return(combined_grob)
 }
 
+# add_grob_to_pos <- function(input_grob, add_grob_table, layout_name){
+#   
+#   add_pos <- subset(add_grob_table$layout, add_grob_table$layout$name == layout_name)[, c("t", "l", "b", "r")]
+#   add_grob <- add_grob_table$grobs[[which(add_grob_table$layout$name == layout_name)]]
+#   combined_grob <- gtable_add_grob(input_grob, add_grob, 
+#                                    add_pos$t, add_pos$l, add_pos$b, add_pos$r)
+#   return(combined_grob)
+# }
+
 check_overlap_plottability <- function(overlap_plots, state_cols, numeric_cols){
   all(sapply(overlap_plots, function(x) x[1] %in% state_cols &
-           x[2] %in% numeric_cols))
+           all(x[-1] %in% numeric_cols)))
 }
 
 create_all_overlapping_plots <- function(all_plots, state_cols, numeric_cols, overlap_plots, titles){
   if(!check_overlap_plottability(overlap_plots, state_cols, numeric_cols)) 
-    stop("Incorrect combination of state and numeric plots")
+    stop("Incorrect combination of state and numeric plots. First item should be state and the rest can be numeric")
   
   sapply(names(overlap_plots), function(name_plot) {
       x = overlap_plots[[name_plot]]
       if(name_plot %in% names(titles)){
-        create_overlapping_plot(all_plots[[x[1]]], all_plots[[x[2]]], titles[[name_plot]])
+        create_overlapping_plot(all_plots[[x[1]]], all_plots[x[-1]], titles[[name_plot]])
       }else{
-        create_overlapping_plot(all_plots[[x[1]]], all_plots[[x[2]]], name_plot)
+        create_overlapping_plot(all_plots[[x[1]]], all_plots[x[-1]], name_plot)
       }
     },
     USE.NAMES = T, simplify = F)
 }
 
-create_overlapping_plot <- function(state_plot, numeric_plot, title_name){
+create_overlapping_plot <- function(state_plot, numeric_plots, title_name){
   state_plot <- state_plot + theme(panel.grid.minor = element_blank(),
                                    panel.grid.major = element_blank()) + ylab("") + ggtitle(title_name)
   
-  numeric_plot <- numeric_plot + theme(panel.grid.minor = element_blank(),
-                                       panel.grid.major = element_blank(),
-                                       panel.background = element_rect(fill = "transparent", colour = NA), 
-                                       plot.background = element_rect(fill = "transparent", colour = NA))
-  
+  numeric_plots <- lapply(numeric_plots, function(single_numeric_plot) {
+    single_numeric_plot + theme(panel.grid.minor = element_blank(),
+                                panel.grid.major = element_blank(),
+                                panel.background = element_rect(fill = "transparent", colour = NA), 
+                                plot.background = element_rect(fill = "transparent", colour = NA))
+  })
+
   state_grob_table <- ggplot_build(state_plot) %>% ggplot_gtable()
-  numeric_grob_table <- ggplot_build(numeric_plot) %>% ggplot_gtable()
+  numeric_grob_tables <- lapply(numeric_plots, . %>% ggplot_build() %>% ggplot_gtable())
   
-  combined_grob <- add_grob_to_pos(state_grob_table, numeric_grob_table, "panel")
-  combined_grob <- add_grob_to_pos(combined_grob, numeric_grob_table, "ylab-l")
-  combined_grob <- add_grob_to_pos(combined_grob, numeric_grob_table, "axis-l")
+  combined_grob <- add_multiple_grobs_to_pos(state_grob_table, numeric_grob_tables, "panel")
+  combined_grob <- add_multiple_grobs_to_pos(combined_grob, numeric_grob_tables, "ylab-l")
+  combined_grob <- add_multiple_grobs_to_pos(combined_grob, numeric_grob_tables, "axis-l")
   
-  combined_grob$widths[3] = numeric_grob_table$widths[3]
+  combined_grob$widths[3] = numeric_grob_tables[[1]]$widths[3]
   return(combined_grob)
 }
