@@ -7,17 +7,16 @@ offsets = c(10, 30, 21, 7, 10, 32)
 test_data = data.frame(
   start_time = start_timestamp + offsets,
   state_1 = c("A", "A", "B", "B", "C", "C"),
-  # state_2 = c("Ananthu", "Mohsin", "Alex", "Rakesh", "Subbu", "Nitin"),
-  state_2 = c("User1", "User1", "User1", "User2", "User2", "User1"),
+  state_2 = c(TRUE, FALSE, TRUE, FALSE, TRUE, FALSE),
   num_1 = c(1, 2, 3, 4, 3, 2),
   num_2 = c(200, 250, 529, 1230, 123, 12),
-  state_3 = c("employee")) %>% dplyr::arrange(start_time)
-str(test_data)
+  state_3 = as.factor("employee")) %>% 
+  dplyr::arrange(start_time)
 
 # This function have to be manually tested
 context("Testing Plot visualize")
 test_that("Default Plotting", {
-  plot_timeline(test_data)
+  expect_output(plot_timeline(test_data), "start_time.*timestamp.*num_1.*num_2.*numeric.*state.*1.*2.*3.*state")
   
   # @human - Check the following things
   # titles for the plots are default - num_1, num_2, state_1, state_2
@@ -27,12 +26,12 @@ test_that("Default Plotting", {
 })
 
 test_that("Default Plotting", {
-  plot_timeline(test_data, add_legend = F)
+  expect_output(plot_timeline(test_data, add_legend = F))
 })
 
 test_that("Different Time ranges", {
   test_data$start_time = start_timestamp + cumsum(sample(1:10, 6, replace = T))
-  plot_timeline(test_data)
+  expect_output(plot_timeline(test_data))
   # times in seconds
   # 
   #   test_data$start_time = start_timestamp + cumsum(sample(1:100, 6, replace = T))
@@ -78,34 +77,35 @@ test_that("Fully fledged test case", {
   overlap_plots_names = list("state_1_num_2" = c("state_1", "num_2"))
   order_plots = c("state_1_num_2", "state_1", "num_1", "state_2", "num_2")
   
-  output_grob = plot_timeline(test_data, data_cols, start_time, end_time,
+  output_grob = expect_output(plot_timeline(test_data, data_cols, start_time, end_time,
                               ylimits, scale_vals, titles, 
                               ylabels, save_path = save_path, 
                               add_legend, plot_size_ratios,
                               overlap_plots_names = overlap_plots_names, color_mapping = color_mapping, 
-                              order_plots = order_plots, plot_output = T)
+                              order_plots = order_plots, plot_output = T))
   
   ## without title for overlapping plot
   titles = c("num_1" = "First Numeric", "num_2" = "Second Numeric", "state_1" = "Last State")
-  output_grob = plot_timeline(test_data, data_cols, start_time, end_time,
+  output_grob = expect_output(plot_timeline(test_data, data_cols, start_time, end_time,
                               ylimits, scale_vals, titles, 
                               ylabels, save_path = save_path, 
                               add_legend, plot_size_ratios,
                               overlap_plots_names = overlap_plots_names, color_mapping = color_mapping, 
-                              order_plots = order_plots, plot_output = T)
+                              order_plots = order_plots, plot_output = T))
   expect_true(TRUE)
 })
 
 context("wrong color mapping")
 test_that("Case 1: not all states have defined mapping",{
   color_mapping = list("state_1" = c("A" = "green", "B" = "Blue"))
-  expect_error(plot_timeline(timeline_df = test_data, color_mapping = color_mapping))
+  expect_output(expect_error(plot_timeline(timeline_df = test_data, color_mapping = color_mapping)))
 
   color_mapping = list("state_1" = c("A" = "green", "B" = "Blue", "C" = "Red", "D" = "Yellow"))
-  expect_error(plot_timeline(timeline_df = test_data, color_mapping = color_mapping))
+  expect_output(expect_error(plot_timeline(timeline_df = test_data, color_mapping = color_mapping)))
 })
 
 test_that("Case 2: undefined states have mapping",{
   color_mapping = list("state_1" = c("A" = "green", "B" = "Blue", "D" = "Red"))
-  expect_error(plot_timeline(timeline_df = test_data, color_mapping = color_mapping))
+  expect_output(expect_error(plot_timeline(timeline_df = test_data, color_mapping = color_mapping)))
 })
+

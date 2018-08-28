@@ -53,18 +53,19 @@ plot_timeline <- function(timeline_df, data_cols = NULL, start_time=NULL, end_ti
   # state columns SHOULD be factors or characters.
   # numeric columns should be numeric
   if(is.null(data_cols)) data_cols = names(timeline_df)
-  check_input_arguments(timeline_df, data_cols, ylimits, scale_vals, titles,
+  
+  timeline_df = check_input_arguments(timeline_df, data_cols, ylimits, scale_vals, titles,
                         ylabels, overlap_plots_names, plot_size_ratios)
   
   # https://github.com/hadley/dplyr/issues/2181
-  if(any(sapply(timeline_df, is.factor))) timeline_df %>%mutate_if(is.factor, as.character ) -> timeline_df # TO CHECK 
+  if(any(sapply(timeline_df, is.factor))) timeline_df %>% mutate_if(is.factor, as.character ) -> timeline_df # TO CHECK 
   
-  col_type = get_col_types(timeline_df)
+  ts_col = get_ts_col(timeline_df)
   
   time_limits = get_time_limits(start_time, end_time)
   
-  timeline_df_subset = timeline_df[ , union(col_type$ts_col, data_cols)]
-  timeline_df_subset_range = subset_data_into_time_range(timeline_df_subset, time_limits, col_type$ts_col)
+  timeline_df_subset = timeline_df[ , union(ts_col, data_cols)]
+  timeline_df_subset_range = subset_data_into_time_range(timeline_df_subset, time_limits, ts_col)
   col_type = get_col_types(timeline_df_subset_range)
   timeline_cleaned = scale_data(timeline_df_subset_range, scale_vals, col_type$numeric_cols)
   actual_ylimits <- get_plot_limits(timeline_cleaned, col_type$numeric_cols, ylimits)
@@ -92,5 +93,5 @@ plot_timeline <- function(timeline_df, data_cols = NULL, start_time=NULL, end_ti
                                                      col_type$numeric_cols, overlap_plots_names, titles)
   grob_output = align_the_plots(all_plots, overlap_plots_grob, plot_size_ratios, order_plots)
   draw_the_plots(grob_output, save_path, plot_output, output_width, output_height)
-  return(grob_output)
+  return(invisible(grob_output))
 }
