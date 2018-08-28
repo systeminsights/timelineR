@@ -1,6 +1,10 @@
 library(testthat)
 library(timelineR)
 
+teardown({
+  unlink("Rplots.pdf")
+})
+
 start_timestamp = as.POSIXct("2017-01-01 00:00:00") 
 offsets = c(10, 30, 21, 7, 10, 32)
 
@@ -110,4 +114,5 @@ test_that("Case 2: undefined states have mapping",{
   color_mapping = list("state_1" = c("A" = "green", "B" = "Blue", "D" = "Red"))
   expect_output(expect_error(plot_timeline(timeline_df = test_data, color_mapping = color_mapping)))
 })
+
 
