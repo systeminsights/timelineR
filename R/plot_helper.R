@@ -8,7 +8,7 @@ generate_state_plot_layer <- function(data_to_plot) {
   end_values = data_to_plot_reduced[2:nrow(data_to_plot_reduced), 1]
   value = NULL # cran check 
   
-  ggplot() + geom_rect(data=data_to_plot_reduced[-nrow(data_to_plot_reduced),],
+  ggplot() + geom_rect(data = data_to_plot_reduced[-nrow(data_to_plot_reduced),],
                        aes(xmin = start_values, xmax = end_values,
                        ymin = 0L, ymax = 1L, fill = value)) 
 }
