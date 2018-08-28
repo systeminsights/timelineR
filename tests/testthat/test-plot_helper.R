@@ -1,7 +1,6 @@
 library(testthat)
 library(timelineR)
 
-Sys.setenv(TZ="Asia/Kolkata")
 context("Testing generate_color_mapping function")
 
 test_that("All columns have same set of values", {

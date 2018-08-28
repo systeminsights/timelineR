@@ -1,6 +1,6 @@
 library(testthat)
 library(timelineR)
-
+Sys.setenv(TZ="Asia/Kolkata")
 context("data_cleaner: check_input_arguments")
 
 test_that("Check if is sorted", {

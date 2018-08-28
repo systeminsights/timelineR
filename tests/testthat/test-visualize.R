@@ -92,6 +92,8 @@ test_that("Fully fledged test case", {
                               add_legend, plot_size_ratios,
                               overlap_plots_names = overlap_plots_names, color_mapping = color_mapping, 
                               order_plots = order_plots, plot_output = T))
+  expect_true(file.exists(save_path))
+  unlink(save_path)
   expect_true(TRUE)
 })
 
