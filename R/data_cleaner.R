@@ -100,11 +100,15 @@ check_input_arguments <- function(timeline_df, data_cols, ylimits, scale_vals,
   if(!all(names(plot_size_ratios) %in% c(names(timeline_df), names(overlap_plots))))
     stop("All plot_size_ratios names not in timeline_df!")
   
-  if(is.unsorted(timeline_df[['timestamp']])){
+  return(TRUE)
+}
+
+sort_timeline_if_unsorted <- function(timeline_df, ts_col){
+  
+  if(is.unsorted(timeline_df[[ts_col]])){
     futile.logger::flog.warn("The timestamp column is not sorted! Sorting now")
     timeline_df = timeline_df %>% 
-      dplyr::arrange(timestamp)
+      dplyr::arrange_(ts_col)
   }
-  
-  return(timeline_df)
+  timeline_df
 }

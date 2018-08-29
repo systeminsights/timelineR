@@ -36,6 +36,8 @@
 #' @param plot_output Logical argument to specify if the output is required to be plotted or not. TRUE(default)
 #' @param numeric_plot_type The plot type for numeric variables. It can be either of the type `line`,`step` or `point`. 
 #' By default the type is `line`.
+#' @param output_width The width of the plot while saving. The value is in pixels.
+#' @param output_height The height of the plot while saving. The value is in pixels.
 #' @return A grob of all the plots 
 #' @export
 plot_timeline <- function(timeline_df, data_cols = NULL, start_time=NULL, end_time=NULL,
@@ -54,13 +56,14 @@ plot_timeline <- function(timeline_df, data_cols = NULL, start_time=NULL, end_ti
   # numeric columns should be numeric
   if(is.null(data_cols)) data_cols = names(timeline_df)
   
-  timeline_df = check_input_arguments(timeline_df, data_cols, ylimits, scale_vals, titles,
+  check_input_arguments(timeline_df, data_cols, ylimits, scale_vals, titles,
                         ylabels, overlap_plots_names, plot_size_ratios)
   
   # https://github.com/hadley/dplyr/issues/2181
   if(any(sapply(timeline_df, is.factor))) timeline_df %>% mutate_if(is.factor, as.character ) -> timeline_df # TO CHECK 
   
   ts_col = get_ts_col(timeline_df)
+  timeline_df = sort_timeline_if_unsorted(timeline_df, ts_col)
   
   time_limits = get_time_limits(start_time, end_time)
   

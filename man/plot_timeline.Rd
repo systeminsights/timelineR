@@ -54,6 +54,10 @@ arranged according to the order of the names in this vector.}
 
 \item{numeric_plot_type}{The plot type for numeric variables. It can be either of the type `line`,`step` or `point`. 
 By default the type is `line`.}
+
+\item{output_width}{The width of the plot while saving. The value is in pixels.}
+
+\item{output_height}{The height of the plot while saving. The value is in pixels.}
 }
 \value{
 A grob of all the plots
