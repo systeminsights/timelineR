@@ -27,4 +27,3 @@ A named vector with the matched names and substituted values or a vector of mact
 This function does a regular expression based search for each name in one vector for the values in the other vector and
 returns a named vector with names as the matched names and values as given in the queried vector.
 }
-

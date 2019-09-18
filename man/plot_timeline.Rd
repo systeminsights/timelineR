@@ -5,11 +5,12 @@
 \title{Plotting function (standard style)}
 \usage{
 plot_timeline(timeline_df, data_cols = NULL, start_time = NULL,
-  end_time = NULL, ylimits = NULL, scale_vals = NULL, titles = NULL,
-  ylabels = NULL, save_path = NULL, add_legend = TRUE,
-  plot_size_ratios = NULL, overlap_plots_names = NULL,
-  color_mapping = list(), order_plots = NULL, plot_output = T,
-  numeric_plot_type = "line")
+  end_time = NULL, ylimits = NULL, scale_vals = NULL,
+  titles = NULL, ylabels = NULL, save_path = NULL,
+  add_legend = TRUE, plot_size_ratios = NULL,
+  overlap_plots_names = NULL, color_mapping = list(),
+  order_plots = NULL, plot_output = T, numeric_plot_type = "line",
+  output_width = 1500, output_height = 800)
 }
 \arguments{
 \item{timeline_df}{Dataframe}
@@ -62,4 +63,3 @@ A grob of all the plots
 Plots time series data of State type (factors) as stripe charts, Numeric data type as step charts and an overlapping
 combination of a plot of State type and Numeric type .
 }
-
