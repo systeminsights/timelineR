@@ -36,6 +36,8 @@
 #' @param plot_output Logical argument to specify if the output is required to be plotted or not. TRUE(default)
 #' @param numeric_plot_type The plot type for numeric variables. It can be either of the type `line`,`step` or `point`. 
 #' By default the type is `line`.
+#' @param output_width The width of the output in pixels
+#' @param output_height The height of the output in pixels
 #' @return A grob of all the plots 
 #' @export
 plot_timeline <- function(timeline_df, data_cols = NULL, start_time=NULL, end_time=NULL,
