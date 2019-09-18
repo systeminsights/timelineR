@@ -244,7 +244,16 @@ draw_the_plots <- function(grob_output, save_path, plot_output = T, output_width
 }
 
 # If need arises to add xlabel, they can be added as prefix by passing to this function
-add_pretty_breaks_and_labels_to_one_oplot <- function(ggobject, prt_brks, xlabels){
+add_pretty_breaks_and_labels_to_one_oplot <- function(ggobject, labels_list){
+  ggobject + xlab(labels_list$xlabel) + 
+    scale_x_datetime(breaks = labels_list$prt_brks, labels = labels_list$brk_labels)
+}
+
+
+get_pretty_breaks_labels <- function(time_limits){
+  prt_brks <- base::pretty(n = 10, x = time_limits)
+  xlabels <- attr(prt_brks, "labels")
+  
   break_patterns = list(
     "Time (HH:MM:SS)"   = "^[[:digit:]]+:[[:digit:]]+:[[:digit:]]+$",
     "Time (HH:MM)"      = "^[[:digit:]]+:[[:digit:]]+$",
@@ -257,15 +266,15 @@ add_pretty_breaks_and_labels_to_one_oplot <- function(ggobject, prt_brks, xlabel
   if(length(which_pattern) == 0)  stop("Coudn't find break pattern!")
   
   xlabels[1] <- as.character(prt_brks[1])
-  ggobject + xlab(names(which_pattern)[1]) + scale_x_datetime(breaks = prt_brks, labels = xlabels)
+  list(prt_brks = prt_brks, brk_labels = xlabels, xlabel = names(which_pattern)[1])
 }
 
+
 add_pretty_breaks_and_xlabel <- function(all_plots, time_limits) {
-  prt_brks <- base::pretty(n = 10, x = time_limits)
-  xlabels <- attr(prt_brks, "labels")
+  labels_list <- get_pretty_breaks_labels(time_limits)
 
   sapply(X = all_plots, FUN = add_pretty_breaks_and_labels_to_one_oplot,
-         prt_brks, xlabels, USE.NAMES = TRUE, simplify = F)
+         labels_list, USE.NAMES = TRUE, simplify = F)
   
 }
 

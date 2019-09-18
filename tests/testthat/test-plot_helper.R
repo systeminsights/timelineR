@@ -2,8 +2,6 @@ library(testthat)
 library(timelineR)
 library(dplyr)
 
-MOCK_env = "timelineR"
-
 context("Testing generate_color_mapping function")
 
 test_that("All columns have same set of values", {
@@ -33,149 +31,97 @@ test_that("All columns do not contain all values", {
 
 # --------------------------------------------------------------
 
-context("add_pretty_breaks_and_labels_to_one_oplot")
+context("get_pretty_breaks_labels")
 
 test_that("Hours - minutes seconds case",{
   
-  MOCK_xlab <- function(label){
-    stopifnot(label == "Time (HH:MM:SS)")
-  }
-  
-  MOCK_scale_x_datetime <- function(ggobject, breaks, labels){
-    expected_labels <- c("2019-09-17 06:59:00", "06:59:30", "07:00:00", "07:00:30", 
-                         "07:01:00", "07:01:30", "07:02:00", "07:02:30", "07:03:00")
-    stopifnot(labels == expected_labels)
-  }
-  
-  
   time_limits = c("2019-09-17 06:59:28", "2019-09-17 07:02:35") %>% as.POSIXct()
   
-  all_plots = c(1,2,3,4)
+  expected_labels_list <- list(prt_brks = base::pretty(n = 10, x = time_limits),
+                               brk_labels = c("2019-09-17 06:59:00", "06:59:30", "07:00:00", "07:00:30", 
+                                              "07:01:00", "07:01:30", "07:02:00", "07:02:30", "07:03:00"),
+                               xlabel = "Time (HH:MM:SS)")
   
-  with_mock(MOCK_env,
-            `ggplot2::xlab` = MOCK_xlab,
-            `ggplot2::scale_x_datetime` = MOCK_scale_x_datetime,
-            timelineR:::add_pretty_breaks_and_xlabel(all_plots, time_limits))
+  actual_labels_list <- timelineR:::get_pretty_breaks_labels(time_limits)
+  
+  expect_equal(actual_labels_list, expected_labels_list)
 })
 
 
 test_that("Hours - minutes case",{
   
-  MOCK_xlab <- function(label){
-    stopifnot(label == "Time (HH:MM)")
-  }
-  
-  MOCK_scale_x_datetime <- function(ggobject, breaks, labels){
-    expected_labels <- c("2019-09-17 06:00:00", "06:30", "07:00", "07:30", "08:00",
-                         "08:30", "09:00", "09:30", "10:00", "10:30", "11:00",
-                         "11:30", "12:00", "12:30")
-    stopifnot(labels == expected_labels)
-  }
-  
-  
   time_limits = c("2019-09-17 06:08:28", "2019-09-17 12:08:35") %>% as.POSIXct()
   
-  all_plots = c(1,2,3,4)
+  expected_labels_list <- list(prt_brks = base::pretty(n = 10, x = time_limits),
+                               brk_labels = c("2019-09-17 06:00:00", "06:30", "07:00", "07:30", "08:00",
+                                              "08:30", "09:00", "09:30", "10:00", "10:30", "11:00",
+                                              "11:30", "12:00", "12:30"),
+                               xlabel = "Time (HH:MM)")
   
-  with_mock(MOCK_env,
-            `ggplot2::xlab` = MOCK_xlab,
-            `ggplot2::scale_x_datetime` = MOCK_scale_x_datetime,
-            timelineR:::add_pretty_breaks_and_xlabel(all_plots, time_limits))
+  actual_labels_list <- timelineR:::get_pretty_breaks_labels(time_limits)
+  
+  expect_equal(actual_labels_list, expected_labels_list)
 })
 
 
 test_that("Seconds case",{
   
-  MOCK_xlab <- function(label){
-    stopifnot(label == "Time (s)")
-  }
-  
-  MOCK_scale_x_datetime <- function(ggobject, breaks, labels){
-    expected_labels <- c("2019-09-17 12:08:28", "29", "30", "31", "32",
-                         "33", "34", "35")
-    stopifnot(labels == expected_labels)
-  }
-  
-  
   time_limits = c("2019-09-17 12:08:28", "2019-09-17 12:08:35") %>% as.POSIXct()
   
-  all_plots = c(1,2,3,4)
+  expected_labels_list <- list(prt_brks = base::pretty(n = 10, x = time_limits),
+                               brk_labels = c("2019-09-17 12:08:28", "29", "30", "31", "32",
+                                              "33", "34", "35"),
+                               xlabel = "Time (s)")
   
-  with_mock(MOCK_env,
-            `ggplot2::xlab` = MOCK_xlab,
-            `ggplot2::scale_x_datetime` = MOCK_scale_x_datetime,
-            timelineR:::add_pretty_breaks_and_xlabel(all_plots, time_limits))
+  actual_labels_list <- timelineR:::get_pretty_breaks_labels(time_limits)
+  
+  expect_equal(actual_labels_list, expected_labels_list)
 })
 
 
 test_that("Date Hours - minutes case",{
   
-  MOCK_xlab <- function(label){
-    stopifnot(label == "Time (Date HH:MM)")
-  }
-  
-  MOCK_scale_x_datetime <- function(ggobject, breaks, labels){
-    expected_labels <- c("2019-09-15 12:00:00", "Sep 15 18:00", "Sep 16 00:00", "Sep 16 06:00",
-                         "Sep 16 12:00",  "Sep 16 18:00",  "Sep 17 00:00",  "Sep 17 06:00",
-                         "Sep 17 12:00",  "Sep 17 18:00")
-    stopifnot(labels == expected_labels)
-  }
-  
-  
   time_limits = c("2019-09-15 16:08:28", "2019-09-17 12:08:35") %>% as.POSIXct()
   
-  all_plots = c(1,2,3,4)
+  expected_labels_list <- list(prt_brks = base::pretty(n = 10, x = time_limits),
+                               brk_labels = c("2019-09-15 12:00:00", "Sep 15 18:00", "Sep 16 00:00", "Sep 16 06:00",
+                                              "Sep 16 12:00",  "Sep 16 18:00",  "Sep 17 00:00",  "Sep 17 06:00",
+                                              "Sep 17 12:00",  "Sep 17 18:00"),
+                               xlabel = "Time (Date HH:MM)")
   
-  with_mock(MOCK_env,
-            `ggplot2::xlab` = MOCK_xlab,
-            `ggplot2::scale_x_datetime` = MOCK_scale_x_datetime,
-            timelineR:::add_pretty_breaks_and_xlabel(all_plots, time_limits))
+  actual_labels_list <- timelineR:::get_pretty_breaks_labels(time_limits)
+  
+  expect_equal(actual_labels_list, expected_labels_list)
+  
 })
 
 
 test_that("Date case",{
   
-  MOCK_xlab <- function(label){
-    stopifnot(label == "Time (Date)")
-  }
-  
-  MOCK_scale_x_datetime <- function(ggobject, breaks, labels){
-    expected_labels <- c("2019-09-01", "Sep 03", "Sep 05", "Sep 07", "Sep 09",
-                         "Sep 11", "Sep 13", "Sep 15", "Sep 17", "Sep 19")
-    stopifnot(labels == expected_labels)
-  }
-  
-  
   time_limits = c("2019-09-01 12:08:28", "2019-09-17 12:08:35") %>% as.POSIXct()
   
-  all_plots = c(1,2,3,4)
+  expected_labels_list <- list(prt_brks = base::pretty(n = 10, x = time_limits),
+                               brk_labels = c("2019-09-01", "Sep 03", "Sep 05", "Sep 07", "Sep 09",
+                                              "Sep 11", "Sep 13", "Sep 15", "Sep 17", "Sep 19"),
+                               xlabel = "Time (Date)")
   
-  with_mock(MOCK_env,
-            `ggplot2::xlab` = MOCK_xlab,
-            `ggplot2::scale_x_datetime` = MOCK_scale_x_datetime,
-            timelineR:::add_pretty_breaks_and_xlabel(all_plots, time_limits))
+  actual_labels_list <- timelineR:::get_pretty_breaks_labels(time_limits)
+  
+  expect_equal(actual_labels_list, expected_labels_list)
+  
 })
 
 
 test_that("Date-Month case",{
   
-  MOCK_xlab <- function(label){
-    stopifnot(label == "Time (Date-Month)")
-  }
-  
-  MOCK_scale_x_datetime <- function(ggobject, breaks, labels){
-    expected_labels <- c("2018-11-01", "Dec", "Jan", "Feb", "Mar",
-                         "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct")
-    stopifnot(labels == expected_labels)
-  }
-  
-  
   time_limits = c("2018-11-17 06:08:28", "2019-09-17 12:08:35") %>% as.POSIXct()
   
-  all_plots = c(1,2,3,4)
+  expected_labels_list <- list(prt_brks = base::pretty(n = 10, x = time_limits),
+                               brk_labels =  c("2018-11-01", "Dec", "Jan", "Feb", "Mar",
+                                               "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct"),
+                               xlabel = "Time (Date-Month)")
   
-  with_mock(MOCK_env,
-            `ggplot2::xlab` = MOCK_xlab,
-            `ggplot2::scale_x_datetime` = MOCK_scale_x_datetime,
-            timelineR:::add_pretty_breaks_and_xlabel(all_plots, time_limits))
+  actual_labels_list <- timelineR:::get_pretty_breaks_labels(time_limits)
+  
+  expect_equal(actual_labels_list, expected_labels_list)
 })
