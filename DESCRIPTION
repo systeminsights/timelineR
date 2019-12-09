@@ -14,6 +14,7 @@ Description: Helps to visualize multi-variate time-series having numeric and fac
 Depends:
    R (>= 3.3.0)
 Imports:
+   rlang,
    dplyr,
    lubridate,
    stringr,

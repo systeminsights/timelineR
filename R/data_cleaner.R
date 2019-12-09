@@ -68,13 +68,18 @@ get_time_limits <- function(start_time, end_time){
   list(start_time = start_time, end_time = end_time)
 }
 
-get_col_types <- function(timeline_df) {
+get_ts_col <- function(timeline_df){
   ts_col = names(timeline_df)[timeline_df %>% sapply(is.POSIXct)]
-  numeric_cols = names(timeline_df)[timeline_df %>% sapply(is.numeric)]
-  state_cols = names(timeline_df)[timeline_df %>% sapply(is.character)]
-  
   if(length(ts_col) == 0) stop("No POSIXct columns detected to assign the timestamp!")
   if(length(ts_col) > 1) stop("Multiple POSIXct columns detected. Timeline DF should have only on timestamp!")
+  ts_col
+}
+
+get_col_types <- function(timeline_df) {
+  
+  ts_col = get_ts_col(timeline_df)
+  numeric_cols = names(timeline_df)[timeline_df %>% sapply(is.numeric)]
+  state_cols = names(timeline_df)[timeline_df %>% sapply(function(x) is.character(x) | is.logical(x))]
   
   flog.info(sprintf("%s has been selected as the timestamp column", ts_col))
   flog.info(sprintf("%s has been selected as the numeric column(s)", paste(numeric_cols, collapse = ", ")))
@@ -94,5 +99,16 @@ check_input_arguments <- function(timeline_df, data_cols, ylimits, scale_vals,
     stop("All overlap_plots names not in timeline_df!")
   if(!all(names(plot_size_ratios) %in% c(names(timeline_df), names(overlap_plots))))
     stop("All plot_size_ratios names not in timeline_df!")
+  
   return(TRUE)
+}
+
+sort_timeline_if_unsorted <- function(timeline_df, ts_col){
+  
+  if(is.unsorted(timeline_df[[ts_col]])){
+    futile.logger::flog.warn("The timestamp column is not sorted! Sorting now")
+    timeline_df = timeline_df %>% 
+      dplyr::arrange(!!rlang::parse_expr(ts_col))
+  }
+  timeline_df
 }

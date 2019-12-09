@@ -2,9 +2,7 @@
 
 This is a resubmission. In this version, I have:
 
-* Corrected the DESCRIPTION title to title case
-
-* Corrected the package Description in DESCRIPTION file to make it generic for the package.
+* Fixed Bugs
 
 ## Test environments
 * local OS X(10.11.6) install, R 3.3.2
