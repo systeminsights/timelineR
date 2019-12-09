@@ -3,6 +3,7 @@
 This is a resubmission. In this version, I have:
 
 * Fixed Bugs
+* Fixed Cran URL
 
 ## Test environments
 * local OS X(10.11.6) install, R 3.3.2

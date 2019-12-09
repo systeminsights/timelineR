@@ -1,8 +1,8 @@
 
-[![codecov.io](http://codecov.io/github/alexsanjoseph/compareDF/coverage.svg?branch=master)](http://codecov.io/github/systeminsights/timelineR?branch=master)
+[![codecov.io](https://codecov.io/github/alexsanjoseph/compareDF/coverage.svg?branch=master)](https://codecov.io/github/systeminsights/timelineR?branch=master)
 [![Travis-CI Build Status](https://api.travis-ci.org/systeminsights/timelineR.svg?branch=master)](https://travis-ci.org/systeminsights/timelineR)
-[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/timelineR)](http://cran.r-project.org/package=timelineR)
-[![CRAN RStudio mirror downloads](http://cranlogs.r-pkg.org/badges/timelineR)](http://www.r-pkg.org/pkg/timelineR)
+[![CRAN_Status_Badge](https://www.r-pkg.org/badges/version/timelineR)](https://cran.r-project.org/package=timelineR)
+[![CRAN RStudio mirror downloads](https://cranlogs.r-pkg.org/badges/timelineR)](https://www.r-pkg.org/pkg/timelineR)
 ![CRAN Total Downloads](https://cranlogs.r-pkg.org/badges/grand-total/timelineR)
 ![License](https://img.shields.io/badge/license-MIT%20License-blue.svg)
 # timelineR: timeline  visualizations in R
