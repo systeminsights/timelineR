@@ -56,7 +56,7 @@ in the data frame. It returns a `grob` object (`grid` package).
 require(timelineR)
 plot_grob <- plot_timeline(air_pollution)
 ```
-![plot of chunk unnamed-chunk-2](<img src="https://raw.githubusercontent.com/alexsanjoseph/compareDF/master/vignettes/figure/unnamed-chunk-2-1.png" width="500" />)
+<img src="https://github.com/systeminsights/timelineR/raw/master/vignettes/figure/unnamed-chunk-2-1.png" width="500" />
 
 ### Subset the variables to plot
 
@@ -68,6 +68,7 @@ the data for all the variables is plotted.
 data_cols = c("pm10", "no")
 plot_grob <- plot_timeline(air_pollution, data_cols = data_cols)
 ```
+<img src="https://github.com/systeminsights/timelineR/raw/master/vignettes/figure/unnamed-chunk-3-1.png" width="500" />
 
 ### Subset the time to plot
 
@@ -79,6 +80,8 @@ start_time = as.POSIXct("2016-03-05")
 end_time = as.POSIXct("2016-03-10")
 plot_grob <- plot_timeline(air_pollution, data_cols = data_cols, start_time = start_time, end_time = end_time)
 ```
+<img src="https://github.com/systeminsights/timelineR/raw/master/vignettes/figure/unnamed-chunk-4-1.png" width="500" />
+
 
 ### Specify Y limits
 
@@ -92,6 +95,7 @@ ylimits = list("pm10" = c(120,180))
 plot_grob <- plot_timeline(air_pollution, data_cols = data_cols, start_time = start_time,
                            end_time = end_time, ylimits = ylimits)
 ```
+<img src="https://github.com/systeminsights/timelineR/raw/master/vignettes/figure/unnamed-chunk-5-1.png" width="500" />
 
 
 ### Scale numeric variables
@@ -103,6 +107,7 @@ data_cols = c("pm10", "no", "odd_even")
 scale_vals = c("pm10" = 0.5, "no" = 2)
 plot_grob <- plot_timeline(air_pollution, data_cols = data_cols, scale_vals = scale_vals)
 ```
+<img src="https://github.com/systeminsights/timelineR/raw/master/vignettes/figure/unnamed-chunk-6-1.png" width="500" />
 
 
 ### Legend
@@ -113,6 +118,7 @@ For state variables, it can be specified if the legend is required or not. By de
 data_cols = c("pm10", "odd_even")
 plot_grob <- plot_timeline(air_pollution, data_cols = data_cols, add_legend = F)
 ```
+<img src="https://github.com/systeminsights/timelineR/raw/master/vignettes/figure/unnamed-chunk-7-1.png" width="500" />
 
 
 ### Color mapping
@@ -126,6 +132,7 @@ data_cols = c("odd_even")
 color_mapping = list("odd_even" = c("NORMAL" = "#E67E22", "ODD-EVEN" = "green4"))
 plot_grob <- plot_timeline(air_pollution, data_cols = data_cols, color_mapping = color_mapping)
 ```
+<img src="https://github.com/systeminsights/timelineR/raw/master/vignettes/figure/unnamed-chunk-8-1.png" width="500" />
 
 
 ### Numeric plot type
@@ -142,12 +149,14 @@ The type of plot can be specified in the argument `numeric_plot_type`. Only thre
 data_cols = c("pm10")
 plot_grob <- plot_timeline(air_pollution, data_cols = data_cols, numeric_plot_type = "step")
 ```
+<img src="https://github.com/systeminsights/timelineR/raw/master/vignettes/figure/unnamed-chunk-9-1.png" width="500" />
 
 
 ```{r, fig.width=8, fig.height=2}
 data_cols = c("co")
 plot_grob <- plot_timeline(air_pollution, data_cols = data_cols, numeric_plot_type = "point")
 ```
+<img src="https://github.com/systeminsights/timelineR/raw/master/vignettes/figure/unnamed-chunk-10-1.png" width="500" />
 
 
 ### Labeling the Y axis
@@ -159,6 +168,7 @@ data_cols = c("co", "pm25", "odd_even")
 ylabels = c("pm25" = "concentration", "odd_even" = "day type")
 plot_grob <- plot_timeline(air_pollution, data_cols = data_cols, ylabels = ylabels)
 ```
+<img src="https://github.com/systeminsights/timelineR/raw/master/vignettes/figure/unnamed-chunk-11-1.png" width="500" />
 
 
 ### Option to show the plot
@@ -183,6 +193,7 @@ data_cols = c("pm25", "odd_even")
 overlapping_plot_names = list("pm25_with_odd_even" = c("odd_even", "pm25"))
 plot_grob <- plot_timeline(air_pollution, data_cols = data_cols, overlap_plots_names = overlapping_plot_names)
 ```
+<img src="https://github.com/systeminsights/timelineR/raw/master/vignettes/figure/unnamed-chunk-13-1.png" width="500" />
 
 
 ### Assigning titles to the plots
@@ -195,6 +206,7 @@ titles = c("pm25" = "Concentration of particulate 2.5 matter", "pm25_with_odd_ev
 overlapping_plot_names = list("pm25_with_odd_even" = c("odd_even", "pm25"))
 plot_grob <- plot_timeline(air_pollution, data_cols = data_cols, overlap_plots_names = overlapping_plot_names, titles = titles)
 ```
+<img src="https://github.com/systeminsights/timelineR/raw/master/vignettes/figure/unnamed-chunk-14-1.png" width="500" />
 
 
 ### Ordering the plots
@@ -210,6 +222,7 @@ overlapping_plot_names = list("pm25_with_odd_even" = c("odd_even", "pm25"))
 order_plots = c("pm25_with_odd_even", "pm25")
 plot_grob <- plot_timeline(air_pollution, data_cols = data_cols, overlap_plots_names = overlapping_plot_names, titles = titles, order_plots = order_plots)
 ```
+<img src="https://github.com/systeminsights/timelineR/raw/master/vignettes/figure/unnamed-chunk-15-1.png" width="500" />
 
 
 ### Relative size of the plots
