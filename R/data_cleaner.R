@@ -108,7 +108,7 @@ sort_timeline_if_unsorted <- function(timeline_df, ts_col){
   if(is.unsorted(timeline_df[[ts_col]])){
     futile.logger::flog.warn("The timestamp column is not sorted! Sorting now")
     timeline_df = timeline_df %>% 
-      dplyr::arrange_(ts_col)
+      dplyr::arrange(!!rlang::parse_expr(ts_col))
   }
   timeline_df
 }

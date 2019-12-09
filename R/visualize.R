@@ -3,6 +3,7 @@
 #' @importFrom futile.logger flog.info
 #' @importFrom stringr str_detect str_replace_all str_split_fixed str_trim
 #' @importFrom grDevices dev.off png
+#' @importFrom rlang parse_expr
 #' @import ggplot2
 #' @import gtable
 
