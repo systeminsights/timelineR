@@ -56,7 +56,7 @@ in the data frame. It returns a `grob` object (`grid` package).
 require(timelineR)
 plot_grob <- plot_timeline(air_pollution)
 ```
-<img src="https://raw.githubusercontent.com/alexsanjoseph/compareDF/master/vignettes/figure/unnamed-chunk-2-1.png" width="500" />
+<img src="https://raw.githubusercontent.com/alexsanjoseph/mtconnectR/master/vignettes/figure/unnamed-chunk-2-1.png" width="500" />
 
 ### Subset the variables to plot
 
